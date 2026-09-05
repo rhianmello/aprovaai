@@ -1,8 +1,11 @@
--- ProvaNorte — pagamentos, validade, acesso por curso e limite de dispositivos
+-- Nós Passa — pagamentos, validade, acesso por curso e limite de dispositivos
 -- Execute UMA vez no Supabase > SQL Editor.
 
 alter table public.courses add column if not exists price_cents integer not null default 0;
-update public.courses set price_cents = 1990 where price_cents = 0;
+update public.courses set price_cents = 1200 where price_cents = 0;
+
+-- Política comercial inicial do Nós Passa: R$12 por curso/ano.
+-- Se os cursos já tiverem outro preço salvo, ajuste manualmente conforme sua campanha.
 
 alter table public.user_courses add column if not exists expires_at timestamptz;
 create unique index if not exists user_courses_user_course_uidx on public.user_courses(user_id, course_id);
@@ -61,7 +64,6 @@ $$;
 revoke execute on function public.has_course_access(bigint) from public, anon;
 grant execute on function public.has_course_access(bigint) to authenticated;
 
--- Limite de 2 dispositivos ativos por usuário.
 create table if not exists public.user_sessions (
   id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade,
   device_id text not null, device_name text, user_agent text, ip_address inet,
