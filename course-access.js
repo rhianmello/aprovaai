@@ -4,6 +4,7 @@
   const SUPABASE_URL='https://ztqtcbzjesrkuaijmylm.supabase.co',SUPABASE_KEY='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
   const COURSE_IDS={'ace-marica':1,'transpetro':2,'inspetor-eletrica':3};
   const loadSupabase=()=>new Promise((resolve,reject)=>{if(window.supabase?.createClient)return resolve(window.supabase);const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.async=true;const t=setTimeout(()=>{s.remove();reject(new Error('timeout'))},10000);s.onload=()=>{clearTimeout(t);window.supabase?.createClient?resolve(window.supabase):reject(new Error('Supabase não carregou'))};s.onerror=()=>{clearTimeout(t);reject(new Error('Falha ao carregar Supabase'))};document.head.appendChild(s)});
+  const withTimeout=(promise,ms=7000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),ms))]);
   const loading=()=>{document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#070a0e;color:#fff;font-family:Arial;padding:24px;text-align:center"><div><div style="width:42px;height:42px;border:3px solid #29313b;border-top-color:#e4c64a;border-radius:50%;margin:0 auto 18px;animation:spin .8s linear infinite"></div><h2>Abrindo sua plataforma…</h2><p style="color:#9da8b5">Validando sua conta e preparando o ambiente de estudos.</p></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>'};
   const errorPage=(title,text)=>{document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#0d1014;color:#fff;font-family:Arial;padding:24px;text-align:center"><div style="max-width:560px"><div style="font-size:42px">⚠️</div><h2>'+title+'</h2><p style="color:#a6adb7;line-height:1.55">'+text+'</p><a href="concursos.html" style="display:inline-block;margin-top:12px;padding:11px 16px;border-radius:10px;background:#e4c64a;color:#111;font-weight:800;text-decoration:none">Voltar aos concursos</a></div></div>'};
   const goLogin=()=>{sessionStorage.setItem('ap_target',location.href);location.replace('login.html')};
@@ -13,17 +14,12 @@
   loading();
   (async()=>{try{
     const sup=await loadSupabase(),sb=sup.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
-    const {data:{user},error:userError}=await sb.auth.getUser();if(userError||!user){goLogin();return;}
+    const {data:{user},error:userError}=await withTimeout(sb.auth.getUser(),7000);if(userError||!user){goLogin();return;}
     let allowed=false;
-    const access=await sb.rpc('has_course_access',{p_course_id:courseId});
-    if(!access.error) allowed=access.data===true;
-    else {
-      const fb=await sb.from('user_courses').select('status,expires_at').eq('user_id',user.id).eq('course_id',courseId).eq('status','active').maybeSingle();
-      allowed=!!fb.data&&(!fb.data.expires_at||new Date(fb.data.expires_at)>new Date());
-    }
+    try{const access=await withTimeout(sb.rpc('has_course_access',{p_course_id:courseId}),5000);if(!access.error&&access.data===true)allowed=true;else if(!access.error&&access.data===false){const fb=await withTimeout(sb.from('user_courses').select('status,expires_at').eq('user_id',user.id).eq('course_id',courseId).eq('status','active').maybeSingle(),5000);allowed=!!fb.data&&(!fb.data.expires_at||new Date(fb.data.expires_at)>new Date())}}catch(e){const fb=await withTimeout(sb.from('user_courses').select('status,expires_at').eq('user_id',user.id).eq('course_id',courseId).eq('status','active').maybeSingle(),5000);allowed=!!fb.data&&(!fb.data.expires_at||new Date(fb.data.expires_at)>new Date())}
     if(!allowed){goCheckout();return;}
     const deviceKey='nos_passa_device_'+user.id;let deviceId=localStorage.getItem(deviceKey);if(!deviceId){deviceId=crypto.randomUUID();localStorage.setItem(deviceKey,deviceId)}
-    try{const d=await sb.rpc('register_device',{p_device_id:deviceId,p_device_name:(navigator.platform||'Dispositivo')+' / '+(navigator.userAgent.includes('Mobile')?'Mobile':'Desktop'),p_user_agent:navigator.userAgent});if(!d.error&&d.data!==true){errorPage('Limite de dispositivos atingido.','Sua conta já possui 2 dispositivos ativos. Revogue um deles no painel administrativo para entrar neste aparelho.');return}}catch(e){console.warn('Validação de dispositivo indisponível; acesso continua validado.',e)}
+    try{const d=await withTimeout(sb.rpc('register_device',{p_device_id:deviceId,p_device_name:(navigator.platform||'Dispositivo')+' / '+(navigator.userAgent.includes('Mobile')?'Mobile':'Desktop'),p_user_agent:navigator.userAgent}),5000);if(!d.error&&d.data!==true){errorPage('Limite de dispositivos atingido.','Sua conta já possui 2 dispositivos ativos. Revogue um deles no painel administrativo para entrar neste aparelho.');return}}catch(e){console.warn('Validação de dispositivo indisponível; acesso continua validado.',e)}
     const brand=document.createElement('script');brand.src='./brand.js';document.body.appendChild(brand);const dash=document.createElement('script');dash.src='./study-dashboard-clean.js';dash.onload=()=>{const r=document.createElement('script');r.src='./retention.js';document.body.appendChild(r)};dash.onerror=()=>errorPage('Não foi possível abrir a área de estudos.','O acesso foi validado, mas o painel não carregou. Atualize a página e tente novamente.');document.body.appendChild(dash);
-  }catch(e){console.error(e);errorPage('Não foi possível abrir sua plataforma.',e.message==='timeout'?'O serviço de autenticação demorou para responder. Atualize a página e tente novamente.':'Verifique sua conexão e tente novamente.')}})();
+  }catch(e){console.error(e);errorPage('Não foi possível abrir sua plataforma.',e.message==='timeout'?'O serviço demorou para responder. Atualize a página e tente novamente.':'Verifique sua conexão e tente novamente.')}})();
 })();
