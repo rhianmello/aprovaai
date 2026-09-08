@@ -55,11 +55,17 @@ Deno.serve(async (req) => {
 
   const admin = createClient(supabaseUrl, serviceKey)
   const { data: purchase, error: purchaseError } = await admin
-    .from('purchases').select('id,user_id,course_id,amount_cents,status').eq('id', purchaseId).single()
+    .from('purchases')
+    .select('id,user_id,course_id,amount_cents,status,billing_mode,metadata,provider_subscription_id')
+    .eq('id', purchaseId)
+    .single()
   if (purchaseError || !purchase) return json({ message: 'Compra interna não encontrada.' }, 404)
 
   const expectedAmount = Number(purchase.amount_cents) / 100
   if (Math.abs(Number(payment.transaction_amount) - expectedAmount) > 0.001) return json({ message: 'Valor do pagamento não confere.' }, 409)
+
+  const previousMetadata = purchase.metadata || {}
+  if (String(previousMetadata.last_payment_id || '') === String(payment.id)) return json({ received: true, duplicate: true })
 
   const statusMap: Record<string,string> = { approved:'paid', rejected:'failed', cancelled:'cancelled', refunded:'refunded', charged_back:'refunded', in_process:'pending', pending:'pending', authorized:'pending' }
   const newStatus = statusMap[String(payment.status)] || 'pending'
@@ -68,12 +74,32 @@ Deno.serve(async (req) => {
     provider: 'mercadopago',
     provider_payment_id: String(payment.id),
     payment_method: payment.payment_method_id || null,
-    metadata: { mp_status: payment.status, status_detail: payment.status_detail || null, payment_id: payment.id, live_mode: payment.live_mode ?? null },
+    metadata: {
+      ...previousMetadata,
+      last_payment_id: String(payment.id),
+      mp_status: payment.status,
+      status_detail: payment.status_detail || null,
+      payment_id: payment.id,
+      live_mode: payment.live_mode ?? null
+    }
   }
   if (newStatus === 'paid') patch.paid_at = payment.date_approved || new Date().toISOString()
 
   const { error: updateError } = await admin.from('purchases').update(patch).eq('id', purchase.id)
   if (updateError) return json({ message: 'Falha ao atualizar compra.' }, 500)
+
+  if (newStatus === 'paid' && String(purchase.billing_mode || '') === 'monthly') {
+    const paidAt = payment.date_approved || new Date().toISOString()
+    const { error: renewalError } = await admin.rpc('renew_monthly_course_access', {
+      p_user_id: purchase.user_id,
+      p_course_id: purchase.course_id,
+      p_paid_at: paidAt
+    })
+    if (renewalError) {
+      console.error('monthly access renewal error', renewalError)
+      return json({ message: 'Pagamento recebido, mas a renovação do acesso falhou.' }, 500)
+    }
+  }
 
   return json({ received: true })
 })
