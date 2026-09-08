@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url)
   const dataId = url.searchParams.get('data.id') || url.searchParams.get('data_id')
+  const eventType = url.searchParams.get('type') || url.searchParams.get('topic') || ''
   const requestId = req.headers.get('x-request-id') || ''
   const signature = parseSignature(req.headers.get('x-signature'))
   const secret = Deno.env.get('MP_WEBHOOK_SECRET')
@@ -46,6 +47,34 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   if (!mpToken || !serviceKey) return json({ message: 'Configuração do servidor incompleta.' }, 500)
 
+  const admin = createClient(supabaseUrl, serviceKey)
+
+  if (eventType === 'subscription_preapproval') {
+    const mp = await fetch(`https://api.mercadopago.com/preapproval/${encodeURIComponent(dataId)}`, { headers: { Authorization: `Bearer ${mpToken}` } })
+    const subscription = await mp.json()
+    if (!mp.ok || !subscription.id) return json({ message: 'Assinatura não encontrada no Mercado Pago.' }, 404)
+
+    const { data: purchase, error } = await admin
+      .from('purchases')
+      .select('id,metadata')
+      .or(`provider_subscription_id.eq.${subscription.id},metadata->>subscription_id.eq.${subscription.id}`)
+      .maybeSingle()
+    if (error || !purchase) return json({ received: true, linked: false })
+
+    const metadata = {
+      ...(purchase.metadata || {}),
+      subscription_status: subscription.status || null,
+      next_payment_date: subscription.next_payment_date || null,
+      subscription_last_modified: subscription.last_modified || null
+    }
+    await admin.from('purchases').update({
+      next_billing_at: subscription.next_payment_date || null,
+      metadata
+    }).eq('id', purchase.id)
+
+    return json({ received: true, subscription: subscription.id })
+  }
+
   const mp = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`, { headers: { Authorization: `Bearer ${mpToken}` } })
   const payment = await mp.json()
   if (!mp.ok || !payment.id) return json({ message: 'Pagamento não encontrado no Mercado Pago.' }, 404)
@@ -53,7 +82,6 @@ Deno.serve(async (req) => {
   const purchaseId = payment.external_reference
   if (!purchaseId) return json({ message: 'Pagamento sem external_reference.' }, 422)
 
-  const admin = createClient(supabaseUrl, serviceKey)
   const { data: purchase, error: purchaseError } = await admin
     .from('purchases')
     .select('id,user_id,course_id,amount_cents,status,billing_mode,metadata,provider_subscription_id')
