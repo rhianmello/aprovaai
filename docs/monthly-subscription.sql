@@ -3,6 +3,10 @@
 -- O acesso é por curso e permanece liberado somente até expires_at.
 -- O usuário continua podendo entrar na conta; apenas o curso fica bloqueado quando vencer.
 
+-- Novo preço comercial: R$1 por mês.
+alter table public.courses add column if not exists price_cents integer not null default 100;
+update public.courses set price_cents = 100 where id in (1,2,3);
+
 alter table public.purchases
   add column if not exists billing_mode text not null default 'one_time';
 
@@ -93,6 +97,7 @@ end;
 $$;
 
 revoke execute on function public.renew_monthly_course_access(uuid,bigint,timestamptz) from public, anon, authenticated;
+grant execute on function public.renew_monthly_course_access(uuid,bigint,timestamptz) to service_role;
 
 -- Reafirma a regra de acesso: curso vencido não é acessível.
 create or replace function public.has_course_access(p_course_id bigint)
