@@ -3,5 +3,8 @@ project_id = "ztqtcbzjesrkuaijmylm"
 [functions.create-payment]
 verify_jwt = true
 
+[functions.create-monthly-subscription]
+verify_jwt = true
+
 [functions.payment-webhook]
 verify_jwt = false
