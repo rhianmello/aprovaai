@@ -6,11 +6,11 @@
   const loading=()=>{document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#070a0e;color:#fff;font-family:Arial;padding:24px;text-align:center"><div><div style="width:42px;height:42px;border:3px solid #29313b;border-top-color:#e4c64a;border-radius:50%;margin:0 auto 18px;animation:spin .8s linear infinite"></div><h2>Abrindo sua plataforma…</h2><p style="color:#9da8b5">Validando sua conta e preparando o ambiente de estudos.</p></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>'};
   const errorPage=(title,text)=>{document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#0d1014;color:#fff;font-family:Arial;padding:24px;text-align:center"><div style="max-width:560px"><div style="font-size:42px">⚠️</div><h2>'+title+'</h2><p style="color:#a6adb7;line-height:1.55">'+text+'</p><a href="concursos.html" style="display:inline-block;margin-top:12px;padding:11px 16px;border-radius:10px;background:#e4c64a;color:#111;font-weight:800;text-decoration:none">Voltar aos concursos</a></div></div>'};
   const goLogin=()=>{sessionStorage.setItem('ap_target',location.href);location.replace('login.html')};
-  const goCheckout=()=>location.replace('checkout.html?course='+encodeURIComponent(courseSlug||''));
+  const goCheckout=()=>location.replace('checkout-popular.html?course='+encodeURIComponent(courseSlug||''));
   if(!courseSlug){errorPage('Curso não configurado.','Esta página não recebeu o identificador do curso.');return;}
   loading();
   (async()=>{try{
-    const sup=await loadSupabase(),sb=sup.createClient(SUPABASE_URL,SUPABASE_KEY);
+    const sup=await loadSupabase(),sb=sup.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
     const {data:{user},error:userError}=await sb.auth.getUser();if(userError||!user){goLogin();return;}
     const {data:course,error:courseError}=await sb.from('courses').select('id,active').eq('slug',courseSlug).maybeSingle();
     if(courseError||!course||!course.active){errorPage('Curso indisponível.','Não foi possível localizar este curso como ativo.');return;}
