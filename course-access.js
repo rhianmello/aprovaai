@@ -23,14 +23,15 @@ try{rows=await api('/rest/v1/user_courses?select=status%2Cexpires_at&user_id=eq.
 const allowed=Array.isArray(rows)&&!!rows[0]&&rows[0].status==='active'&&(!rows[0].expires_at||new Date(rows[0].expires_at)>new Date());
 if(!allowed){location.replace('minha-conta.html');return}
 try{const key='nos_passa_device_'+user.id;let device=localStorage.getItem(key);if(!device){device=crypto.randomUUID();localStorage.setItem(key,device)}await api('/rest/v1/rpc/register_device',token,{method:'POST',body:JSON.stringify({p_device_id:device,p_device_name:(navigator.platform||'Dispositivo')+' / '+(navigator.userAgent.includes('Mobile')?'Mobile':'Desktop'),p_user_agent:navigator.userAgent})})}catch(e){console.warn('Registro de dispositivo ignorado:',e)}
-/* O dashboard não pode depender de CDN externa para abrir. A matrícula já foi validada via REST. */
+/* O banco de questões nunca pode impedir o painel de abrir. Se uma fonte de questões travar, o ambiente abre vazio e continua utilizável. */
+if(window.STUDY_CONFIG?.bankLoader){const originalBankLoader=window.STUDY_CONFIG.bankLoader;window.STUDY_CONFIG.bankLoader=async()=>{try{return await Promise.race([Promise.resolve(originalBankLoader()),new Promise(resolve=>setTimeout(()=>resolve([]),6000))])}catch(e){console.warn('Banco de questões indisponível:',e);return []}}}
 if(!window.supabase?.createClient)window.supabase=makeLocalSupabase(auth);
 window.__NP_AUTH_USER=user;
-const version='?v=20260908-3';
+const version='?v=20260908-4';
 const brand=document.createElement('script');brand.src='./brand.js'+version;document.body.appendChild(brand);
 const dash=document.createElement('script');
 let dashboardStarted=false;
-const failTimer=setTimeout(()=>{if(!dashboardStarted&&document.getElementById('np-loading'))page('Não foi possível abrir sua plataforma.','O painel de estudos não carregou. Tente novamente.');},12000);
+const failTimer=setTimeout(()=>{if(!dashboardStarted&&document.getElementById('np-loading'))page('Não foi possível abrir sua plataforma.','O painel de estudos não carregou. Tente novamente.');},10000);
 dash.onload=()=>{dashboardStarted=true;clearTimeout(failTimer);};
 dash.onerror=()=>{clearTimeout(failTimer);page('Não foi possível abrir a área de estudos.','O arquivo do painel de estudos não carregou. Tente novamente.');};
 dash.src='./study-dashboard-clean.js'+version;document.body.appendChild(dash);
