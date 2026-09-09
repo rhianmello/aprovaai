@@ -148,7 +148,7 @@ begin
     select 1 from public.study_sessions s
     where s.id = v_session and s.user_id = v_user and s.course_id = v_course
   ) then
-    return coalesce(new, old);
+    if tg_op = 'DELETE' then return old; else return new; end if;
   end if;
 
   select coalesce(round(sum(extract(epoch from (coalesce(i.ended_at, i.last_heartbeat_at) - i.started_at)))::numeric), 0)::integer
@@ -164,7 +164,7 @@ begin
      and user_id = v_user
      and course_id = v_course;
 
-  return coalesce(new, old);
+  if tg_op = 'DELETE' then return old; else return new; end if;
 end;
 $$;
 
@@ -174,7 +174,6 @@ after insert or update of started_at, ended_at, last_heartbeat_at or delete
 on public.study_session_intervals
 for each row execute procedure public.study_recalc_session_duration();
 
--- Reordenação transacional: recebe a ordem completa de um dia.
 create or replace function public.reorder_study_plan_day(
   p_plan_id uuid,
   p_course_id bigint,
@@ -191,160 +190,93 @@ declare
   v_expected integer;
   v_received integer := coalesce(array_length(p_activity_ids, 1), 0);
 begin
-  if v_uid is null then
-    raise exception 'not_authenticated';
-  end if;
-
+  if v_uid is null then raise exception 'not_authenticated'; end if;
   if not exists (
     select 1 from public.study_plans p
     where p.id = p_plan_id and p.user_id = v_uid and p.course_id = p_course_id and p.active = true
-  ) then
-    raise exception 'plan_not_owned';
-  end if;
+  ) then raise exception 'plan_not_owned'; end if;
 
   select count(*) into v_expected
   from public.study_plan_activities a
-  where a.plan_id = p_plan_id
-    and a.user_id = v_uid
-    and a.course_id = p_course_id
-    and a.day_of_week = p_day_of_week
-    and a.active = true;
+  where a.plan_id = p_plan_id and a.user_id = v_uid and a.course_id = p_course_id
+    and a.day_of_week = p_day_of_week and a.active = true;
 
-  if v_expected <> v_received then
-    raise exception 'invalid_activity_set';
-  end if;
+  if v_expected <> v_received then raise exception 'invalid_activity_set'; end if;
 
   if exists (
-    select 1
-    from unnest(p_activity_ids) x
+    select 1 from unnest(p_activity_ids) x
     where not exists (
       select 1 from public.study_plan_activities a
-      where a.id = x
-        and a.plan_id = p_plan_id
-        and a.user_id = v_uid
-        and a.course_id = p_course_id
-        and a.day_of_week = p_day_of_week
-        and a.active = true
+      where a.id = x and a.plan_id = p_plan_id and a.user_id = v_uid
+        and a.course_id = p_course_id and a.day_of_week = p_day_of_week and a.active = true
     )
-  ) then
-    raise exception 'activity_not_owned';
-  end if;
+  ) then raise exception 'activity_not_owned'; end if;
 
   update public.study_plan_activities a
      set order_index = x.ord::integer - 1
     from unnest(p_activity_ids) with ordinality as x(id, ord)
-   where a.id = x.id
-     and a.plan_id = p_plan_id
-     and a.user_id = v_uid
-     and a.course_id = p_course_id
-     and a.day_of_week = p_day_of_week;
+   where a.id = x.id and a.plan_id = p_plan_id and a.user_id = v_uid
+     and a.course_id = p_course_id and a.day_of_week = p_day_of_week;
 end;
 $$;
 
--- RLS
 alter table public.study_plans enable row level security;
 alter table public.study_plan_activities enable row level security;
 alter table public.study_sessions enable row level security;
 alter table public.study_session_intervals enable row level security;
 
--- Policies: plano
- drop policy if exists study_plans_select_own on public.study_plans;
-create policy study_plans_select_own
-on public.study_plans for select to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_plans_select_own on public.study_plans;
+create policy study_plans_select_own on public.study_plans for select to authenticated using (user_id = auth.uid());
 
- drop policy if exists study_plans_insert_own on public.study_plans;
-create policy study_plans_insert_own
-on public.study_plans for insert to authenticated
-with check (
-  user_id = auth.uid()
-  and exists (
-    select 1 from public.user_courses uc
-    where uc.user_id = auth.uid()
-      and uc.course_id = study_plans.course_id
-      and uc.status = 'active'
-      and (uc.expires_at is null or uc.expires_at > now())
-  )
-);
+drop policy if exists study_plans_insert_own on public.study_plans;
+create policy study_plans_insert_own on public.study_plans for insert to authenticated
+with check (user_id = auth.uid() and exists (
+  select 1 from public.user_courses uc
+  where uc.user_id = auth.uid() and uc.course_id = study_plans.course_id
+    and uc.status = 'active' and (uc.expires_at is null or uc.expires_at > now())
+));
 
- drop policy if exists study_plans_update_own on public.study_plans;
-create policy study_plans_update_own
-on public.study_plans for update to authenticated
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
+drop policy if exists study_plans_update_own on public.study_plans;
+create policy study_plans_update_own on public.study_plans for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
- drop policy if exists study_plans_delete_own on public.study_plans;
-create policy study_plans_delete_own
-on public.study_plans for delete to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_plans_delete_own on public.study_plans;
+create policy study_plans_delete_own on public.study_plans for delete to authenticated using (user_id = auth.uid());
 
--- Policies: atividades
- drop policy if exists study_plan_activities_select_own on public.study_plan_activities;
-create policy study_plan_activities_select_own
-on public.study_plan_activities for select to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_plan_activities_select_own on public.study_plan_activities;
+create policy study_plan_activities_select_own on public.study_plan_activities for select to authenticated using (user_id = auth.uid());
 
- drop policy if exists study_plan_activities_insert_own on public.study_plan_activities;
-create policy study_plan_activities_insert_own
-on public.study_plan_activities for insert to authenticated
-with check (user_id = auth.uid());
+drop policy if exists study_plan_activities_insert_own on public.study_plan_activities;
+create policy study_plan_activities_insert_own on public.study_plan_activities for insert to authenticated with check (user_id = auth.uid());
 
- drop policy if exists study_plan_activities_update_own on public.study_plan_activities;
-create policy study_plan_activities_update_own
-on public.study_plan_activities for update to authenticated
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
+drop policy if exists study_plan_activities_update_own on public.study_plan_activities;
+create policy study_plan_activities_update_own on public.study_plan_activities for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
- drop policy if exists study_plan_activities_delete_own on public.study_plan_activities;
-create policy study_plan_activities_delete_own
-on public.study_plan_activities for delete to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_plan_activities_delete_own on public.study_plan_activities;
+create policy study_plan_activities_delete_own on public.study_plan_activities for delete to authenticated using (user_id = auth.uid());
 
--- Policies: sessões
- drop policy if exists study_sessions_select_own on public.study_sessions;
-create policy study_sessions_select_own
-on public.study_sessions for select to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_sessions_select_own on public.study_sessions;
+create policy study_sessions_select_own on public.study_sessions for select to authenticated using (user_id = auth.uid());
 
- drop policy if exists study_sessions_insert_own on public.study_sessions;
-create policy study_sessions_insert_own
-on public.study_sessions for insert to authenticated
-with check (user_id = auth.uid());
+drop policy if exists study_sessions_insert_own on public.study_sessions;
+create policy study_sessions_insert_own on public.study_sessions for insert to authenticated with check (user_id = auth.uid());
 
- drop policy if exists study_sessions_update_own on public.study_sessions;
-create policy study_sessions_update_own
-on public.study_sessions for update to authenticated
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
+drop policy if exists study_sessions_update_own on public.study_sessions;
+create policy study_sessions_update_own on public.study_sessions for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- Histórico de sessão: não permitimos apagar para preservar auditoria do próprio usuário.
- drop policy if exists study_sessions_delete_own on public.study_sessions;
-create policy study_sessions_delete_own
-on public.study_sessions for delete to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_sessions_delete_own on public.study_sessions;
+create policy study_sessions_delete_own on public.study_sessions for delete to authenticated using (user_id = auth.uid());
 
--- Policies: intervalos
- drop policy if exists study_session_intervals_select_own on public.study_session_intervals;
-create policy study_session_intervals_select_own
-on public.study_session_intervals for select to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_session_intervals_select_own on public.study_session_intervals;
+create policy study_session_intervals_select_own on public.study_session_intervals for select to authenticated using (user_id = auth.uid());
 
- drop policy if exists study_session_intervals_insert_own on public.study_session_intervals;
-create policy study_session_intervals_insert_own
-on public.study_session_intervals for insert to authenticated
-with check (user_id = auth.uid());
+drop policy if exists study_session_intervals_insert_own on public.study_session_intervals;
+create policy study_session_intervals_insert_own on public.study_session_intervals for insert to authenticated with check (user_id = auth.uid());
 
- drop policy if exists study_session_intervals_update_own on public.study_session_intervals;
-create policy study_session_intervals_update_own
-on public.study_session_intervals for update to authenticated
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
+drop policy if exists study_session_intervals_update_own on public.study_session_intervals;
+create policy study_session_intervals_update_own on public.study_session_intervals for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
- drop policy if exists study_session_intervals_delete_own on public.study_session_intervals;
-create policy study_session_intervals_delete_own
-on public.study_session_intervals for delete to authenticated
-using (user_id = auth.uid());
+drop policy if exists study_session_intervals_delete_own on public.study_session_intervals;
+create policy study_session_intervals_delete_own on public.study_session_intervals for delete to authenticated using (user_id = auth.uid());
 
--- Corrige/remarca as funções de ordenação apenas para autenticados.
 revoke execute on function public.reorder_study_plan_day(uuid,bigint,smallint,uuid[]) from public, anon;
 grant execute on function public.reorder_study_plan_day(uuid,bigint,smallint,uuid[]) to authenticated;
