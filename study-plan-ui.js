@@ -1,0 +1,51 @@
+/* Nós Passa — camada de UX do Meu Plano. Não altera o motor do plano nem o cronômetro. */
+(function(){
+'use strict';
+const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
+const sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
+const slug=(new URLSearchParams(location.search).get('course')||'').trim();
+const $=id=>document.getElementById(id);
+let user=null,courseId=null,plan=null,ready=false;
+async function courseMap(){
+ const r=await fetch('./course-access.js?v=20260909-2',{cache:'no-store'});
+ if(!r.ok)throw Error('Falha ao carregar cursos');
+ const text=await r.text(),m=text.match(/const IDS\s*=\s*\{([^}]+)\}/);
+ if(!m)throw Error('Mapeamento de cursos não encontrado');
+ const out={};for(const hit of m[1].matchAll(/['"]([^'"]+)['"]\s*:\s*(\d+)/g))out[hit[1]]=Number(hit[2]);return out;
+}
+async function load(){
+ if(ready)return;
+ const session=(await sb.auth.getSession()).data.session;if(!session?.user||!slug)return;
+ user=session.user;courseId=(await courseMap())[slug];if(!Number.isInteger(courseId))return;
+ const{data,error}=await sb.from('study_plans').select('id,name').eq('user_id',user.id).eq('course_id',courseId).eq('active',true).maybeSingle();
+ if(error)throw error;plan=data||null;ready=true;mount();
+}
+function mount(){
+ const planName=$('planName');if(!planName)return;
+ const head=planName.closest('.panel-head');
+ if(head&&!head.querySelector('[data-edit-plan]')){
+  const actions=document.createElement('div');actions.className='plan-head-actions';
+  const edit=document.createElement('button');edit.type='button';edit.className='btn secondary';edit.dataset.editPlan='1';edit.textContent='✏️ Editar plano';edit.hidden=!plan;edit.onclick=openEdit;actions.appendChild(edit);
+  const newBtn=$('newActivity');if(newBtn){newBtn.remove();actions.appendChild(newBtn)}head.appendChild(actions);
+ }
+ const createTitle=document.querySelector('#createWrap h3');if(createTitle&&!plan)createTitle.textContent='Você ainda não criou seu plano';
+ const createText=document.querySelector('#createWrap .muted');if(createText&&!plan)createText.textContent='Monte sua rotina semanal de estudos para este curso.';
+ mountDayNav();if(!document.querySelector('[data-plan-modal]'))buildModal();
+}
+function mountDayNav(){
+ const tabs=$('dayTabs');if(!tabs||tabs.parentElement?.dataset.dayNav==='1')return;
+ const wrap=document.createElement('div');wrap.className='day-nav';wrap.dataset.dayNav='1';
+ const prev=document.createElement('button');prev.type='button';prev.className='day-arrow';prev.setAttribute('aria-label','Dia anterior');prev.textContent='‹';
+ const next=document.createElement('button');next.type='button';next.className='day-arrow';next.setAttribute('aria-label','Próximo dia');next.textContent='›';
+ tabs.parentNode.insertBefore(wrap,tabs);wrap.append(prev,tabs,next);
+ const move=dir=>{const all=[...tabs.querySelectorAll('.day-tab')],i=all.findIndex(x=>x.classList.contains('active'));if(i<0)return;const n=Math.max(0,Math.min(6,i+dir));all[n]?.click()};prev.onclick=()=>move(-1);next.onclick=()=>move(1);
+}
+function buildModal(){
+ const d=document.createElement('div');d.className='modal-backdrop';d.dataset.planModal='1';d.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="editPlanTitle"><div class="modal-head"><h2 id="editPlanTitle">Editar plano</h2><button class="close" type="button" data-plan-close>×</button></div><form id="editPlanForm"><div class="field"><label for="editPlanName">Nome do plano</label><input id="editPlanName" type="text" maxlength="80" required placeholder="Ex.: Preparação Transpetro 2026"></div><div class="modal-actions"><button class="btn secondary" type="button" data-plan-cancel>Cancelar</button><button class="btn" type="submit">Salvar</button></div></form></div>';
+ document.body.appendChild(d);d.querySelector('[data-plan-close]').onclick=closeEdit;d.querySelector('[data-plan-cancel]').onclick=closeEdit;d.querySelector('form').onsubmit=saveEdit;
+}
+function openEdit(){if(!plan)return;const input=$('editPlanName');if(input)input.value=plan.name||'';document.querySelector('[data-plan-modal]')?.classList.add('open');setTimeout(()=>input?.focus(),0)}
+function closeEdit(){document.querySelector('[data-plan-modal]')?.classList.remove('open')}
+async function saveEdit(e){e.preventDefault();if(!plan)return;const name=($('editPlanName')?.value||'').trim();if(!name)return;const btn=e.submitter;btn.disabled=true;const{data,error}=await sb.from('study_plans').update({name}).eq('id',plan.id).eq('user_id',user.id).eq('course_id',courseId).eq('active',true).select('id,name').single();btn.disabled=false;if(error){alert(error.message);return}plan=data;$('planName').textContent=plan.name;closeEdit();const notice=$('notice');if(notice){notice.textContent='Plano atualizado.';notice.hidden=false;notice.className='notice ok';setTimeout(()=>{notice.hidden=true},2600)}}
+const obs=new MutationObserver(()=>{try{mount()}catch(e){console.error('[Meu Plano UX]',e)}});obs.observe(document.body,{childList:true,subtree:true});load().catch(e=>console.error('[Meu Plano UX]',e));
+})();
