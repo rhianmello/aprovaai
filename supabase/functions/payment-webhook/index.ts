@@ -24,6 +24,20 @@ async function hmacHex(secret: string, message: string) {
   return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('')
 }
 
+async function fetchPaymentWithRetry(mpToken: string, paymentId: string) {
+  const delays = [0, 2000, 4000, 6000]
+  let last: any = null
+  for (const delay of delays) {
+    if (delay) await new Promise(resolve => setTimeout(resolve, delay))
+    const response = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(paymentId)}`, { headers: { Authorization: `Bearer ${mpToken}` } })
+    const data = await response.json()
+    if (!response.ok || !data?.id) return { ok:false, data }
+    last = data
+    if (String(data.status) !== 'pending' && String(data.status) !== 'in_process' && String(data.status) !== 'authorized') return { ok:true, data }
+  }
+  return { ok:true, data:last }
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ message: 'Método não permitido.' }, 405)
 
@@ -75,9 +89,9 @@ Deno.serve(async (req) => {
     return json({ received: true, subscription: subscription.id })
   }
 
-  const mp = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`, { headers: { Authorization: `Bearer ${mpToken}` } })
-  const payment = await mp.json()
-  if (!mp.ok || !payment.id) return json({ message: 'Pagamento não encontrado no Mercado Pago.' }, 404)
+  const paymentResult = await fetchPaymentWithRetry(mpToken, dataId)
+  if (!paymentResult.ok || !paymentResult.data?.id) return json({ message: 'Pagamento não encontrado no Mercado Pago.' }, 404)
+  const payment = paymentResult.data
 
   const purchaseId = payment.external_reference
   if (!purchaseId) return json({ message: 'Pagamento sem external_reference.' }, 422)
@@ -93,7 +107,7 @@ Deno.serve(async (req) => {
   if (Math.abs(Number(payment.transaction_amount) - expectedAmount) > 0.001) return json({ message: 'Valor do pagamento não confere.' }, 409)
 
   const previousMetadata = purchase.metadata || {}
-  if (String(previousMetadata.last_payment_id || '') === String(payment.id)) return json({ received: true, duplicate: true })
+  if (String(previousMetadata.last_payment_id || '') === String(payment.id) && String(previousMetadata.mp_status || '') === String(payment.status)) return json({ received: true, duplicate: true })
 
   const statusMap: Record<string,string> = { approved:'paid', rejected:'failed', cancelled:'cancelled', refunded:'refunded', charged_back:'refunded', in_process:'pending', pending:'pending', authorized:'pending' }
   const newStatus = statusMap[String(payment.status)] || 'pending'
@@ -116,16 +130,32 @@ Deno.serve(async (req) => {
   const { error: updateError } = await admin.from('purchases').update(patch).eq('id', purchase.id)
   if (updateError) return json({ message: 'Falha ao atualizar compra.' }, 500)
 
+  if (newStatus === 'pending') {
+    console.warn('Mercado Pago ainda reporta pagamento pendente; solicitando nova tentativa de webhook', { payment_id: payment.id, purchase_id: purchase.id, status: payment.status })
+    return json({ message: 'Pagamento ainda pendente no Mercado Pago; aguardar nova notificação.' }, 503)
+  }
+
   if (newStatus === 'paid' && String(purchase.billing_mode || '') === 'monthly') {
-    const paidAt = payment.date_approved || new Date().toISOString()
-    const { error: renewalError } = await admin.rpc('renew_monthly_course_access', {
-      p_user_id: purchase.user_id,
-      p_course_id: purchase.course_id,
-      p_paid_at: paidAt
-    })
-    if (renewalError) {
-      console.error('monthly access renewal error', renewalError)
-      return json({ message: 'Pagamento recebido, mas a renovação do acesso falhou.' }, 500)
+    // The monthly SQL migration creates a paid-status trigger. After the purchase update,
+    // prefer the trigger's grant when it exists; fall back to the RPC if no enrollment exists.
+    const { data: enrollment } = await admin
+      .from('user_courses')
+      .select('status,expires_at')
+      .eq('user_id', purchase.user_id)
+      .eq('course_id', purchase.course_id)
+      .maybeSingle()
+
+    if (!enrollment) {
+      const paidAt = payment.date_approved || new Date().toISOString()
+      const { error: renewalError } = await admin.rpc('renew_monthly_course_access', {
+        p_user_id: purchase.user_id,
+        p_course_id: purchase.course_id,
+        p_paid_at: paidAt
+      })
+      if (renewalError) {
+        console.error('monthly access renewal error', renewalError)
+        return json({ message: 'Pagamento recebido, mas a renovação do acesso falhou.' }, 500)
+      }
     }
   }
 
