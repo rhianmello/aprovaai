@@ -15,9 +15,7 @@ const loadSupabase=()=>new Promise((resolve,reject)=>{if(window.supabase?.create
 if(!id){page('Curso não configurado.','Identificador de curso inválido.');return}loading();
 (async()=>{try{
 let auth=getStoredAuth();
-if(!auth){
-  try{const sup=await loadSupabase(),tmp=sup.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});window.supabase=sup;const r=await race(tmp.auth.getSession(),12000);auth=r.data?.session||null}catch(e){console.warn('Fallback de sessão:',e)}
-}
+if(!auth){try{const sup=await loadSupabase(),tmp=sup.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});window.supabase=sup;const r=await race(tmp.auth.getSession(),12000);auth=r.data?.session||null}catch(e){console.warn('Fallback de sessão:',e)}}
 if(!auth?.access_token||!auth?.user){login();return}
 const token=auth.access_token,user=auth.user;
 let rows;
@@ -25,10 +23,8 @@ try{rows=await api('/rest/v1/user_courses?select=status%2Cexpires_at&user_id=eq.
 let allowed=Array.isArray(rows)&&!!rows[0]&&rows[0].status==='active'&&(!rows[0].expires_at||new Date(rows[0].expires_at)>new Date());
 if(!allowed&&!Array.isArray(rows)){try{const rpc=await api('/rest/v1/rpc/has_course_access',token,{method:'POST',body:JSON.stringify({p_course_id:id})});allowed=rpc===true}catch(e){}}
 if(!allowed){location.replace('checkout-popular.html?course='+encodeURIComponent(slug));return}
-/* O controle de dispositivos não pode impedir o acesso por falha de rede. */
 try{const key='nos_passa_device_'+user.id;let device=localStorage.getItem(key);if(!device){device=crypto.randomUUID();localStorage.setItem(key,device)}await api('/rest/v1/rpc/register_device',token,{method:'POST',body:JSON.stringify({p_device_id:device,p_device_name:(navigator.platform||'Dispositivo')+' / '+(navigator.userAgent.includes('Mobile')?'Mobile':'Desktop'),p_user_agent:navigator.userAgent})})}catch(e){console.warn('Registro de dispositivo ignorado:',e)}
-/* Carrega a biblioteca apenas depois de validar a matrícula. Se o CDN estiver indisponível, o dashboard ainda abre em modo local. */
-try{const sup=await loadSupabase();window.supabase=sup}catch(e){console.warn('Supabase JS indisponível; dashboard seguirá em modo local:',e)}
+try{const sup=await loadSupabase();window.supabase=sup}catch(e){console.warn('Supabase JS indisponível; usando cliente local mínimo:',e);window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user}},error:null}),signOut:async()=>{try{Object.keys(localStorage).filter(k=>k.startsWith('sb-')&&k.endsWith('-auth-token')).forEach(k=>localStorage.removeItem(k))}catch(x){}},updateUser:async()=>({data:null,error:null})}})}}
 window.__NP_AUTH_USER=user;
 const brand=document.createElement('script');brand.src='./brand.js';document.body.appendChild(brand);
 const dash=document.createElement('script');dash.src='./study-dashboard-clean.js';dash.onload=()=>{const r=document.createElement('script');r.src='./retention.js';document.body.appendChild(r)};dash.onerror=()=>page('Não foi possível abrir a área de estudos.','O acesso foi validado, mas o painel de estudos não carregou. Atualize a página e tente novamente.');document.body.appendChild(dash);
