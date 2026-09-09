@@ -3,8 +3,26 @@
 const script=document.currentScript,slug=script?.dataset?.course;
 const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
 const IDS={'ace-marica':1,'transpetro':2,'inspetor-eletrica':3};
-const loadScript=(src,ms=7000)=>new Promise((ok,bad)=>{const s=document.createElement('script');s.src=src;s.async=true;let done=false;const finish=(fn,v)=>{if(done)return;done=true;fn(v)};s.onload=()=>window.supabase?.createClient?finish(ok,window.supabase):finish(bad,Error('Supabase carregou, mas a biblioteca não foi inicializada'));s.onerror=()=>finish(bad,Error('Falha ao carregar '+src));setTimeout(()=>finish(bad,Error('timeout')),ms);document.head.appendChild(s)});
-const load=async()=>{if(window.supabase?.createClient)return window.supabase;const cdns=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js','https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js'];let last;for(const src of cdns){try{return await loadScript(src)}catch(e){last=e}}throw last||Error('Supabase não carregou')};
+const CDNS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js','https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
+const load=()=>new Promise(async(resolve,reject)=>{
+  if(window.supabase?.createClient){resolve(window.supabase);return}
+  let lastError=null;
+  for(const src of CDNs){
+    try{
+      await new Promise((ok,bad)=>{
+        const s=document.createElement('script');s.src=src;s.async=true;
+        let done=false;
+        const finish=(fn,v)=>{if(done)return;done=true;clearTimeout(timer);s.removeEventListener('load',onload);s.removeEventListener('error',onerror);fn(v)};
+        const onload=()=>window.supabase?.createClient?finish(ok):finish(bad,new Error('Biblioteca carregada sem cliente Supabase'));
+        const onerror=()=>finish(bad,new Error('Falha ao carregar '+src));
+        const timer=setTimeout(()=>finish(bad,new Error('timeout')),8000);
+        s.addEventListener('load',onload);s.addEventListener('error',onerror);document.head.appendChild(s);
+      });
+      if(window.supabase?.createClient){resolve(window.supabase);return}
+    }catch(e){lastError=e}
+  }
+  reject(lastError||new Error('Não foi possível carregar o Supabase'));
+});
 const withTimeout=(promise,ms=7000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),ms))]);
 const page=(title,text)=>{document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#0d1014;color:#fff;font-family:Arial;padding:24px;text-align:center"><div style="max-width:560px"><div style="font-size:42px">⚠️</div><h2>'+title+'</h2><p style="color:#a6adb7;line-height:1.55">'+text+'</p><a href="concursos.html" style="display:inline-block;margin-top:12px;padding:11px 16px;border-radius:10px;background:#e4c64a;color:#111;font-weight:800;text-decoration:none">Voltar aos concursos</a></div></div>'};
 const loading=()=>{document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#070a0e;color:#fff;font-family:Arial;padding:24px;text-align:center"><div><div style="width:42px;height:42px;border:3px solid #29313b;border-top-color:#e4c64a;border-radius:50%;margin:0 auto 18px;animation:spin .8s linear infinite"></div><h2>Abrindo sua plataforma…</h2><p style="color:#9da8b5">Validando sua conta e preparando o ambiente de estudos.</p></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>'};
@@ -13,6 +31,8 @@ const checkout=()=>location.replace('checkout-popular.html?course='+encodeURICom
 const id=IDS[slug];if(!id){page('Curso não configurado.','Identificador de curso inválido.');return}loading();
 (async()=>{try{
 const sup=await load(),sb=sup.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
+/* O dashboard legado usa window.supabase; garantimos que a biblioteca global esteja disponível. */
+window.supabase=sup;
 const sessionResult=await withTimeout(sb.auth.getSession(),5000);const user=sessionResult.data?.session?.user;
 if(sessionResult.error||!user){login();return}
 let allowed=false;let enrollmentError=null;
