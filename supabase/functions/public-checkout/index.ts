@@ -39,12 +39,13 @@ Deno.serve(async(req)=>{
   if(courseError||!course||!course.active)return json({message:'Curso indisponível.'},400)
   if(Number(course.price_cents||0)!==100)return json({message:'Este curso não está configurado para o pagamento mensal de R$ 1,00.'},409)
 
-  const{data:existing}=await admin.auth.admin.getUserByEmail(email)
-  if(existing?.user)return json({message:'Este e-mail já possui cadastro. Clique em “Já tenho cadastro” e entre na sua conta para continuar.'},409)
-
+  // O createUser já valida se o e-mail existe. A API atual do Supabase JS não possui getUserByEmail.
   const{data:created,error:createError}=await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:nome,nome,telefone}})
   if(createError||!created.user){
-    const msg=(createError?.message||'Não foi possível criar sua conta.').toLowerCase().includes('already')?'Este e-mail já possui cadastro. Clique em “Já tenho cadastro” e entre na sua conta para continuar.':(createError?.message||'Não foi possível criar sua conta.')
+    const raw=(createError?.message||'').toLowerCase()
+    const msg=raw.includes('already')||raw.includes('registered')||raw.includes('exists')
+      ?'Este e-mail já possui cadastro. Clique em “Já tenho cadastro” e entre na sua conta para continuar.'
+      :(createError?.message||'Não foi possível criar sua conta.')
     return json({message:msg},409)
   }
 
