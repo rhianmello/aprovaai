@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.admin-create-student]
 verify_jwt = true
+
+[functions.public-checkout]
+verify_jwt = false
