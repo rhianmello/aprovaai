@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Normalize visitor tracker on HTML pages
+      - name: Normalize visitor tracker and admin tools on HTML pages
         shell: python
         run: |
           from pathlib import Path
@@ -45,6 +45,12 @@ jobs:
                   if i >= 0:
                       new = new[:i] + supabase_tag + new[i:]
 
+              if p.as_posix() == 'admin-v3.html':
+                  marker = '<section id="payments"'
+                  if 'admin-import-questions-link' not in new and marker in new:
+                      link = '<div id="admin-import-questions-link" style="margin:14px 0;padding:14px 16px;background:#11161c;border:1px solid #2a3440;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><strong style="font-size:15px">📝 Banco de questões</strong><div style="color:#99a4b0;font-size:12px;margin-top:4px">Importe lotes JSON com validação e dry-run.</div></div><a href="admin/importar-questoes.html" style="display:inline-block;padding:9px 13px;border-radius:9px;background:#e4c64a;color:#111;font-weight:900;text-decoration:none">Importar questões</a></div>'
+                      new = new.replace(marker, link + marker, 1)
+
               if new != text:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
@@ -62,5 +68,5 @@ jobs:
             exit 0
           fi
           git add -A
-          git commit -m "chore: normalize site-wide visitor tracker"
+          git commit -m "chore: add admin question importer shortcut"
           git push
