@@ -65,13 +65,13 @@ function enhanceHeader(){
 }
 function improveSiteAgora(){
  const box=document.getElementById('np-site-agora');if(!box)return;
- const h=box.querySelector('h2');if(h)h.textContent='Visão geral do site';
- const sub=box.querySelector('.np-refresh');if(sub)sub.textContent='Visitantes e origem das entradas em tempo real';
+ const h=box.querySelector('h2');if(h && h.textContent!=='Visão geral do site')h.textContent='Visão geral do site';
+ const sub=box.querySelector('.np-refresh');if(sub && sub.textContent!=='Visitantes e origem das entradas em tempo real')sub.textContent='Visitantes e origem das entradas em tempo real';
 }
 function improvePayments(){
  const s=document.getElementById('payments');if(!s)return;
- const notice=s.querySelector('.notice');if(notice)notice.style.display='none';
- const bar=document.getElementById('np-payment-cleanup');if(bar)bar.style.marginTop='0';
+ const notice=s.querySelector('.notice');if(notice && notice.style.display!=='none')notice.style.display='none';
+ const bar=document.getElementById('np-payment-cleanup');if(bar && bar.style.marginTop!=='0px')bar.style.marginTop='0';
 }
 function watch(){
  injectCss();buildSidebar();enhanceHeader();improveSiteAgora();improvePayments();
