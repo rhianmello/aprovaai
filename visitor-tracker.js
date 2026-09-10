@@ -11,7 +11,7 @@ async function loadSupabase(){
  if(!clientPromise){clientPromise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.onload=()=>resolve(window.supabase);s.onerror=()=>reject(new Error('Supabase indisponível'));document.head.appendChild(s)})}
  return clientPromise;
 }
-async function getClient(){const api=await loadSupabase();return api.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}})}
+async function getClient(){const api=await loadSupabase();return api.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,lock:async(_name,_acquireTimeout,fn)=>await fn()}})}
 async function session(){try{const sb=await getClient();const r=await sb.auth.getSession();return r.data?.session||null}catch(e){return null}}
 function normalizeLoginLinks(){
  if(/login\.html$/i.test(location.pathname))return;
