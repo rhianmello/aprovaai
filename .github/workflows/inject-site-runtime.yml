@@ -73,14 +73,17 @@ jobs:
               rel_tracker = os.path.relpath(tracker, p.parent).replace(os.sep, '/')
               tracker_tag = f'<script src="{rel_tracker}"></script>'
               new = re.sub(r'<script\s+src=["\'][^"\']*visitor-tracker\.js[^"\']*["\']\s*></script>', '', text, flags=re.I)
-              low = new.lower()
-              marker = '</head>'
-              if marker in low:
-                  i = low.rfind(marker)
-                  new = new[:i] + tracker_tag + new[i:]
-              elif '</body>' in low:
-                  i = low.rfind('</body>')
-                  new = new[:i] + tracker_tag + new[i:]
+
+              # The admin panel must not load visitor analytics.
+              if p.as_posix() != 'admin-v3.html':
+                  low = new.lower()
+                  marker = '</head>'
+                  if marker in low:
+                      i = low.rfind(marker)
+                      new = new[:i] + tracker_tag + new[i:]
+                  elif '</body>' in low:
+                      i = low.rfind('</body>')
+                      new = new[:i] + tracker_tag + new[i:]
 
               if p.as_posix() == 'simulados-gratis.html':
                   if supabase_tag not in new:
