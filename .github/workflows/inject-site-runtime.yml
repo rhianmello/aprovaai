@@ -39,8 +39,7 @@ jobs:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
 
-          # The database currently uses the legacy public slug "transpetro" for SAP.
-          # Keep SEO/catalog assets aligned with that real course identifier.
+          # The database currently uses the public slug "transpetro" for SAP.
           legacy_sap_slug = 'transpetro-2026-analise-de-sistemas-sap'
           for p in root.rglob('*'):
               if '.git' in p.parts or not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.json', '.xml', '.txt'}:
@@ -50,6 +49,19 @@ jobs:
               except UnicodeDecodeError:
                   continue
               new = text.replace(legacy_sap_slug, 'transpetro')
+              if new != text:
+                  p.write_text(new, encoding='utf-8')
+                  changed.append(p.as_posix())
+
+          # Current official Transpetro schedule: objective exams on 06/12/2026.
+          for p in root.rglob('*'):
+              if '.git' in p.parts or not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.json', '.xml', '.txt'}:
+                  continue
+              try:
+                  text = p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              new = text.replace('29/11/2026', '06/12/2026')
               if new != text:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
@@ -122,5 +134,5 @@ jobs:
             exit 0
           fi
           git add -A
-          git commit -m "chore: normalize site URLs and course slugs"
+          git commit -m "chore: normalize site URLs, slugs and schedule"
           git push
