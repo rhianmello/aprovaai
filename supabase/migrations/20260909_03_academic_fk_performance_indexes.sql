@@ -1,0 +1,13 @@
+BEGIN;
+DROP INDEX IF EXISTS ux_academic_subtopics_topic_slug;
+CREATE INDEX IF NOT EXISTS ix_academic_content_item_subtopics_subtopic ON academic_content_item_subtopics(subtopic_id);
+CREATE INDEX IF NOT EXISTS ix_academic_content_items_subtopic_topic ON academic_content_items(subtopic_id,topic_id);
+CREATE INDEX IF NOT EXISTS ix_academic_content_items_topic_subject ON academic_content_items(topic_id,subject_id);
+CREATE INDEX IF NOT EXISTS ix_preparations_position_edition ON preparations(position_id,edition_id);
+CREATE INDEX IF NOT EXISTS ix_question_applicability_content_app_prep ON question_applicability_content(applicability_id,preparation_id);
+CREATE INDEX IF NOT EXISTS ix_question_applicability_content_content_prep ON question_applicability_content(content_item_id,preparation_id);
+CREATE INDEX IF NOT EXISTS ix_question_attempts_question_preparation ON question_attempts(question_id,preparation_id);
+CREATE INDEX IF NOT EXISTS ix_study_plans_course_preparation ON study_plans(course_id,preparation_id);
+CREATE INDEX IF NOT EXISTS ix_study_plan_activities_plan_preparation ON study_plan_activities(plan_id,preparation_id);
+CREATE INDEX IF NOT EXISTS ix_study_sessions_activity_preparation ON study_sessions(plan_activity_id,preparation_id);
+COMMIT;
