@@ -1,7 +1,7 @@
 /* Nós Passa — analytics anônimo + estado de sessão + SITE AGORA. Não coleta IP. */
 (function(){
 'use strict';
-const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_QJdUVMK9d';
+const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
 let clientPromise=null,adminMode=false;
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function visitorId(){let v=localStorage.getItem('np_visitor_id');if(!v){v=crypto.randomUUID?crypto.randomUUID():'v-'+Date.now()+'-'+Math.random().toString(36).slice(2);localStorage.setItem('np_visitor_id',v)}return v}
