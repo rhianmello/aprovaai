@@ -62,21 +62,31 @@ async function getActivityTopic(id){
   return data||{};
  }catch(e){console.warn('[Workspace] não foi possível carregar a atividade',e);return {}}
 }
+async function hasRunningSessionForActivity(id){
+ try{
+  const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
+  const sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
+  const{data,error}=await sb.from('study_sessions').select('id,status,plan_activity_id').eq('plan_activity_id',id).in('status',['running','paused']).maybeSingle();
+  if(error)throw error;
+  return !!data;
+ }catch(e){console.warn('[Workspace] não foi possível validar a sessão',e);return false}
+}
 function bindStart(){
  if(typeof window.startActivity!=='function'||window.startActivity.__npWorkspaceWrapped)return;
  const original=window.startActivity;
  const wrapped=async function(id){
   const activity=await getActivityTopic(id);
   const result=await original(id);
-  if(activity?.topic)open(activity.topic);
+  const started=await hasRunningSessionForActivity(id);
+  if(started&&activity?.topic)open(activity.topic);
   return result;
  };
  wrapped.__npWorkspaceWrapped=true;
  window.startActivity=wrapped;
 }
 function init(){mount();bindStart();
- const timerObserver=new MutationObserver(()=>bindStart());
- timerObserver.observe(document.body,{childList:true,subtree:true});
+ const observer=new MutationObserver(()=>bindStart());
+ observer.observe(document.body,{childList:true,subtree:true});
  window.NPStudyWorkspace={open,close};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
