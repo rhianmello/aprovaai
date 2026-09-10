@@ -1,0 +1,40 @@
+name: Ajustar visual dos planos
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  ajustar:
+    if: ${{ !contains(github.event.head_commit.message, '[auto-planos]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aplicar elementos visuais
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('visitor-tracker.js')
+          s = p.read_text(encoding='utf-8')
+          marker = '.np-price-deco{position:absolute;'
+          if marker not in s:
+              old = '.np-price-wrap{position:relative;max-width:1280px;margin:auto;padding:0 86px}.np-price-grid{'
+              new = '.np-price-wrap{position:relative;max-width:1280px;margin:auto;padding:0 86px}.np-price-deco{position:absolute;z-index:2;pointer-events:none;text-align:center;font-weight:900;line-height:1.35}.np-price-deco.left{left:5px;top:18px;width:78px;color:#62c3ed}.np-price-deco.right{right:5px;top:20px;width:82px;color:#e4c64a}.np-price-deco.top{right:8px;top:-4px;width:105px;color:#e4c64a}.np-price-deco .np-deco-icon{display:block;font-size:48px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35))}.np-price-deco .np-deco-text{font-size:11px;font-style:italic;letter-spacing:.2px}.np-price-deco .np-arrow{display:block;font-size:26px;margin-top:6px}.np-price-deco.top .np-deco-icon{font-size:28px}.np-price-deco.top .np-deco-text{font-size:10px}.np-price-grid{'
+              if old not in s:
+                  raise SystemExit('CSS marker not found')
+              s = s.replace(old, new, 1)
+              s = s.replace('@media(max-width:1050px){', '@media(max-width:1050px){#np-pricing .np-price-deco{display:none}', 1)
+              old_html = '<div class="np-price-wrap"><div class="np-price-grid">'
+              new_html = '<div class="np-price-wrap"><div class="np-price-deco top"><span class="np-deco-icon">↗</span><span class="np-deco-text">Acompanhe seu progresso e evolua!</span></div><div class="np-price-deco left"><span class="np-deco-icon">🎓</span><span class="np-deco-text">Seu futuro começa aqui!</span><span class="np-arrow">↘</span></div><div class="np-price-deco right"><span class="np-deco-icon">🏆</span><span class="np-deco-text">Disciplina hoje.<br>Aprovação amanhã!</span><span class="np-arrow">↙</span></div><div class="np-price-grid">'
+              if old_html not in s:
+                  raise SystemExit('HTML marker not found')
+              s = s.replace(old_html, new_html, 1)
+              p.write_text(s, encoding='utf-8')
+      - name: Commitar alteração e remover workflow temporário
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add visitor-tracker.js
+          git rm -f .github/workflows/ajustar-planos.yml
+          git commit -m "Ajusta elementos visuais dos planos [auto-planos]" || exit 0
+          git push
