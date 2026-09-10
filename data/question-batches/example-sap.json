@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "batch": "SAP - exemplo",
+  "preparation_slug": "transpetro-2026-analise-de-sistemas-sap",
+  "questions": [
+    {
+      "external_id": "sap-exemplo-001",
+      "statement": "Em um sistema ERP, a integração entre módulos tem como objetivo principal:",
+      "alternatives": {
+        "A": "eliminar a necessidade de dados mestres",
+        "B": "evitar qualquer regra de negócio",
+        "C": "compartilhar informações e processos de forma integrada",
+        "D": "substituir todos os controles internos por planilhas",
+        "E": "impedir o acesso simultâneo aos dados"
+      },
+      "answer": "C",
+      "explanation": "A integração entre módulos permite que processos e informações fluam de forma consistente entre áreas, reduzindo retrabalho e divergências.",
+      "discipline": "ERP-SAP",
+      "topic": "Fundamentos de ERP e SAP",
+      "subtopic": null,
+      "difficulty": "medium",
+      "cognitive_level": "understanding",
+      "question_type": "multiple_choice",
+      "source_type": "original",
+      "source_reference": "Nós Passa — questão autoral",
+      "year": 2026,
+      "is_original": true,
+      "active": true,
+      "status": "approved"
+    }
+  ]
+}
