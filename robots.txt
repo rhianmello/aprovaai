@@ -24,4 +24,4 @@ Disallow: /transpetro-v2.html
 Disallow: /transpetro_2026.html
 Disallow: /transpetro_plano_estudos.html
 Disallow: /inspetor_eletrica.html
-Sitemap: https://www.nospassa.com.br/sitemap.xml
+Sitemap: https://nospassa.com.br/sitemap.xml
