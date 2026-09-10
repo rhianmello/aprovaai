@@ -79,4 +79,23 @@ function watch(){
  setTimeout(()=>mo.disconnect(),120000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch,{once:true});else watch();
+
+// Security bridge: profile status changes must use the protected admin RPC.
+setTimeout(()=>{
+  if(typeof window.toggleStudent!=='function') return;
+  const originalToggleStudent=window.toggleStudent;
+  window.toggleStudent=async function(id,active){
+    if(!confirm(active?'Desbloquear este aluno?':'Bloquear este aluno?')) return;
+    const client=window.__NP_ADMIN_SB;
+    if(!client){return alert('Sessão administrativa indisponível. Atualize a página e tente novamente.');}
+    const {error}=await client.rpc('admin_set_profile_status',{p_user_id:id,p_active:active});
+    if(error){return alert(error.message||'Não foi possível alterar o status do aluno.');}
+    if(!active){
+      const r=await client.from('user_courses').update({status:'blocked'}).eq('user_id',id);
+      if(r.error)return alert('Aluno bloqueado, mas não foi possível bloquear as matrículas: '+r.error.message);
+    }
+    if(typeof window.load==='function') await window.load();
+    else location.reload();
+  };
+},0);
 })();
