@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "batch": "SAP - exemplo",
-  "preparation_slug": "transpetro-2026-analise-de-sistemas-sap",
+  "preparation_slug": "transpetro",
   "questions": [
     {
       "external_id": "sap-exemplo-001",
