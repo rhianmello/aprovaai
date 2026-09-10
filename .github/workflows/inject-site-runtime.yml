@@ -24,6 +24,21 @@ jobs:
           test_ui = 'simulados-gratis-ui.js'
           supabase_tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>'
 
+          # Keep the custom domain as the single public canonical host.
+          old_base = 'https://rhianmello.github.io/aprovaai'
+          new_base = 'https://www.nospassa.com.br'
+          for p in root.rglob('*'):
+              if '.git' in p.parts or not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.json', '.xml', '.txt'}:
+                  continue
+              try:
+                  text = p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              new = text.replace(old_base, new_base)
+              if new != text:
+                  p.write_text(new, encoding='utf-8')
+                  changed.append(p.as_posix())
+
           for p in root.rglob('*.html'):
               if '.git' in p.parts:
                   continue
@@ -80,8 +95,8 @@ jobs:
                   p.write_text(new, encoding='utf-8')
                   changed.append('visitor-tracker.js')
 
-          print(f'Normalized {len(changed)} files')
-          for x in changed: print(x)
+          print(f'Normalized {len(set(changed))} files')
+          for x in sorted(set(changed)): print(x)
 
       - name: Commit changes
         run: |
@@ -92,5 +107,5 @@ jobs:
             exit 0
           fi
           git add -A
-          git commit -m "chore: remove pricing card decorations"
+          git commit -m "chore: normalize custom domain URLs"
           git push
