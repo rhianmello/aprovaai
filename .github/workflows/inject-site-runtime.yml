@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Normalize visitor tracker and admin tools on HTML pages
+      - name: Normalize site runtime
         shell: python
         run: |
           from pathlib import Path
@@ -21,29 +21,34 @@ jobs:
           root = Path('.')
           changed = []
           tracker = 'visitor-tracker.js'
+          test_ui = 'simulados-gratis-ui.js'
           supabase_tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>'
 
           for p in root.rglob('*.html'):
               if '.git' in p.parts:
                   continue
               text = p.read_text(encoding='utf-8')
-              rel = os.path.relpath(tracker, p.parent).replace(os.sep, '/')
-              tag = f'<script src="{rel}"></script>'
+              rel_tracker = os.path.relpath(tracker, p.parent).replace(os.sep, '/')
+              tracker_tag = f'<script src="{rel_tracker}"></script>'
               new = re.sub(r'<script\s+src=["\'][^"\']*visitor-tracker\.js[^"\']*["\']\s*></script>', '', text, flags=re.I)
               low = new.lower()
               marker = '</head>'
               if marker in low:
                   i = low.rfind(marker)
-                  new = new[:i] + tag + new[i:]
+                  new = new[:i] + tracker_tag + new[i:]
               elif '</body>' in low:
                   i = low.rfind('</body>')
-                  new = new[:i] + tag + new[i:]
+                  new = new[:i] + tracker_tag + new[i:]
 
-              if p.as_posix() == 'simulados-gratis.html' and supabase_tag not in new:
-                  low = new.lower()
-                  i = low.rfind('</head>')
-                  if i >= 0:
-                      new = new[:i] + supabase_tag + new[i:]
+              if p.as_posix() == 'simulados-gratis.html':
+                  if supabase_tag not in new:
+                      low = new.lower(); i = low.rfind('</head>')
+                      if i >= 0: new = new[:i] + supabase_tag + new[i:]
+                  rel_ui = os.path.relpath(test_ui, p.parent).replace(os.sep, '/')
+                  ui_tag = f'<script src="{rel_ui}"></script>'
+                  new = re.sub(r'<script\s+src=["\'][^"\']*simulados-gratis-ui\.js[^"\']*["\']\s*></script>', '', new, flags=re.I)
+                  low = new.lower(); i = low.rfind('</body>')
+                  if i >= 0: new = new[:i] + ui_tag + new[i:]
 
               if p.as_posix() == 'admin-v3.html':
                   marker = '<section id="payments"'
@@ -55,9 +60,17 @@ jobs:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
 
-          print(f'Normalized {len(changed)} HTML pages')
-          for x in changed:
-              print(x)
+          # Evita o emoji de calendário da Apple mostrar uma data fixa (17 de julho).
+          p = root / 'study-dashboard-stable-v2.js'
+          if p.exists():
+              text = p.read_text(encoding='utf-8')
+              new = text.replace('📅 Plano de estudo', '📋 Plano de estudo').replace('📅 Questões de hoje', '📝 Questões de hoje')
+              if new != text:
+                  p.write_text(new, encoding='utf-8')
+                  changed.append(p.as_posix())
+
+          print(f'Normalized {len(changed)} files')
+          for x in changed: print(x)
 
       - name: Commit changes
         run: |
@@ -68,5 +81,5 @@ jobs:
             exit 0
           fi
           git add -A
-          git commit -m "chore: add admin question importer shortcut"
+          git commit -m "chore: improve free-test navigation and plan icon"
           git push
