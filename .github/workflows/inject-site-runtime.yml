@@ -96,6 +96,8 @@ jobs:
                   if i >= 0: new = new[:i] + ui_tag + new[i:]
 
               if p.as_posix() == 'admin-v3.html':
+                  # Force the browser to pick up the current admin-modern.js build.
+                  new = re.sub(r'admin-modern\.js(?:\?v=[^"\']*)?', 'admin-modern.js?v=20260910-4', new, flags=re.I)
                   marker = '<section id="payments"'
                   if 'admin-import-questions-link' not in new and marker in new:
                       link = '<div id="admin-import-questions-link" style="margin:14px 0;padding:14px 16px;background:#11161c;border:1px solid #2a3440;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><strong style="font-size:15px">📝 Banco de questões</strong><div style="color:#99a4b0;font-size:12px;margin-top:4px">Importe lotes JSON com validação e dry-run.</div></div><a href="admin/importar-questoes.html" style="display:inline-block;padding:9px 13px;border-radius:9px;background:#e4c64a;color:#111;font-weight:900;text-decoration:none">Importar questões</a></div>'
