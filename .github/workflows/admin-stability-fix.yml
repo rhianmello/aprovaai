@@ -1,0 +1,69 @@
+name: Corrigir estabilidade do ADM
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ajustar clientes Supabase do ADM
+        shell: python
+        run: |
+          from pathlib import Path
+
+          # O ADM usa mais de um cliente Supabase (autenticação + analytics + tracker).
+          # Todos precisam usar a mesma política de lock para não disputarem o Navigator Lock.
+          for name in ['admin-dashboard.js', 'visitor-tracker.js']:
+              p = Path(name)
+              s = p.read_text(encoding='utf-8')
+              old = "auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}"
+              new = "auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,lock:async(_name,_acquireTimeout,fn)=>await fn()}"
+              if old in s and 'lock:async(_name,_acquireTimeout,fn)' not in s:
+                  s = s.replace(old, new)
+                  p.write_text(s, encoding='utf-8')
+                  print(f'Lock ajustado em {name}')
+              else:
+                  print(f'Sem alteração em {name}')
+
+          # Deixa a inicialização principal do ADM acessível aos módulos auxiliares.
+          p = Path('admin-v3.html')
+          s = p.read_text(encoding='utf-8')
+          old = "sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,lock:async(_name,_acquireTimeout,fn)=>await fn()}});"
+          new = old + "window.__NP_ADMIN_SB=sb;"
+          if old in s and 'window.__NP_ADMIN_SB=sb' not in s:
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+              print('Cliente principal exposto para os módulos do ADM')
+
+          # Cache-busting dos três módulos do ADM para evitar que o navegador mantenha versões antigas.
+          p = Path('admin-v3.html')
+          s = p.read_text(encoding='utf-8')
+          replacements = {
+              'admin-modern.js"': 'admin-modern.js?v=20260910-2"',
+              'admin-dashboard.js"': 'admin-dashboard.js?v=20260910-2"',
+              'visitor-tracker.js"': 'visitor-tracker.js?v=20260910-2"',
+          }
+          for old_tag, new_tag in replacements.items():
+              if new_tag not in s and old_tag in s:
+                  s = s.replace(old_tag, new_tag, 1)
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit e publicar
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-v3.html admin-dashboard.js visitor-tracker.js
+          if git diff --cached --quiet; then
+            echo 'Nenhuma alteração necessária.'
+            exit 0
+          fi
+          git commit -m 'fix: estabilizar inicialização e cache do ADM'
+          git push
