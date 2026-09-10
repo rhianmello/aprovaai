@@ -9,29 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Injetar dashboard no ADM
+      - name: Normalizar dashboard no ADM
+        shell: python
         run: |
-          python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('admin-v3.html')
           s=p.read_text(encoding='utf-8')
-          tag='<script src="admin-dashboard.js"></script>'
-          if tag not in s:
-              anchor='<script src="admin-modern.js"></script>'
-              if anchor in s:
-                  s=s.replace(anchor,anchor+tag,1)
-              else:
-                  s=s.replace('</head>',tag+'</head>',1)
-              p.write_text(s,encoding='utf-8')
-          PY
+          s=re.sub(r'<script\s+src=["\']admin-dashboard\.js(?:\?[^"\']*)?["\']\s*></script>','',s,flags=re.I)
+          tag='<script src="admin-dashboard.js?v=20260910-3"></script>'
+          s=s.replace('</head>',tag+'</head>',1)
+          p.write_text(s,encoding='utf-8')
       - name: Commit e publicar
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add admin-v3.html
-          if git diff --cached --quiet; then
-            echo 'Dashboard já está ativo'
-          else
-            git commit -m 'chore: ativar dashboard analitico do ADM'
-            git push
-          fi
+          if git diff --cached --quiet; then echo 'Dashboard já está normalizado'; else git commit -m 'chore: normalize admin dashboard runtime'; git push; fi
