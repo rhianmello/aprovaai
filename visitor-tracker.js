@@ -1,10 +1,60 @@
-/* Nós Passa — contador anônimo de visitantes. Não coleta IP. */
+/* Nós Passa — analytics anônimo + estado de sessão + SITE AGORA. Não coleta IP. */
 (function(){
 'use strict';
 const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
-function id(){let v=localStorage.getItem('np_visitor_id');if(!v){v=crypto.randomUUID?crypto.randomUUID():'v-'+Date.now()+'-'+Math.random().toString(36).slice(2);localStorage.setItem('np_visitor_id',v)}return v}
-async function ping(){try{if(!window.supabase?.createClient)return;const sb=window.supabase.createClient(U,K,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});await sb.rpc('track_site_visit',{p_visitor_id:id(),p_path:location.pathname+p(),p_referrer:document.referrer||null,p_user_agent:navigator.userAgent})}catch(e){console.warn('[VisitorTracker]',e)}}
-function p(){return location.search||''}
-function start(){ping();setInterval(ping,60000)}
+let clientPromise=null,adminMode=false;
+const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function visitorId(){let v=localStorage.getItem('np_visitor_id');if(!v){v=crypto.randomUUID?crypto.randomUUID():'v-'+Date.now()+'-'+Math.random().toString(36).slice(2);localStorage.setItem('np_visitor_id',v)}return v}
+function query(){return location.search||''}
+async function loadSupabase(){
+ if(window.supabase?.createClient)return window.supabase;
+ if(!clientPromise){clientPromise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.onload=()=>resolve(window.supabase);s.onerror=()=>reject(new Error('Supabase indisponível'));document.head.appendChild(s)})}
+ return clientPromise;
+}
+async function getClient(){const api=await loadSupabase();return api.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}})}
+async function session(){try{const sb=await getClient();const r=await sb.auth.getSession();return r.data?.session||null}catch(e){return null}}
+function normalizeLoginLinks(){
+ if(/login\.html$/i.test(location.pathname))return;
+ const links=[...document.querySelectorAll('a[href*="login.html"],button')];
+ links.forEach(el=>{
+  const text=(el.textContent||'').trim().toLowerCase();
+  if(el.tagName==='A'&&el.getAttribute('href')?.includes('login.html')){el.textContent='Minha conta';el.setAttribute('href','minha-conta.html');return}
+  if(el.tagName==='BUTTON'&&text==='entrar'&&el.type!=='submit'){el.textContent='Minha conta';el.onclick=()=>location.assign('minha-conta.html')}
+ })
+}
+async function refreshAuthUI(){const s=await session();if(s)normalizeLoginLinks();return s}
+async function ping(){
+ try{
+  if(adminMode)return;
+  const sb=await getClient();
+  await sb.rpc('track_site_visit',{p_visitor_id:visitorId(),p_path:location.pathname+query(),p_referrer:document.referrer||null,p_user_agent:navigator.userAgent});
+ }catch(e){console.warn('[VisitorTracker]',e)}
+}
+function injectStyles(){if(document.getElementById('np-site-agora-css'))return;const s=document.createElement('style');s.id='np-site-agora-css';s.textContent=`#np-site-agora{margin-top:14px;background:#11161c;border:1px solid #2a3440;border-radius:16px;padding:18px}#np-site-agora .np-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}#np-site-agora h2{margin:0;font-size:20px}#np-site-agora .np-live{font-size:11px;font-weight:900;color:#8be3b7;background:#173126;border:1px solid #2b6049;border-radius:99px;padding:5px 9px}#np-site-agora .np-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}#np-site-agora .np-card{background:#0d1319;border:1px solid #2a3440;border-radius:12px;padding:13px}#np-site-agora .np-label{font-size:11px;color:#99a4b0;text-transform:uppercase;font-weight:800}#np-site-agora .np-value{font-size:25px;font-weight:900;margin-top:5px}#np-site-agora .np-sub{font-size:11px;color:#7f8994;margin-top:3px}#np-site-agora .np-table{margin-top:14px;overflow:auto}#np-site-agora table{width:100%;border-collapse:collapse}#np-site-agora th,#np-site-agora td{text-align:left;padding:9px;border-bottom:1px solid #2a3440;white-space:nowrap}#np-site-agora th{font-size:10px;color:#99a4b0;text-transform:uppercase}#np-site-agora .np-refresh{font-size:11px;color:#7f8994}@media(max-width:900px){#np-site-agora .np-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){#np-site-agora .np-grid{grid-template-columns:1fr}}`;
+document.head.appendChild(s)}
+function injectAdminBlock(){
+ if(document.getElementById('np-site-agora'))return;
+ const app=document.getElementById('app');if(!app)return;
+ injectStyles();const box=document.createElement('section');box.id='np-site-agora';box.innerHTML=`<div class="np-head"><div><h2>🌐 SITE AGORA</h2><div class="np-refresh">Atualização automática a cada 30 segundos</div></div><span class="np-live">● AO VIVO</span></div><div class="np-grid"><div class="np-card"><div class="np-label">Online agora</div><div id="np-online" class="np-value">—</div><div class="np-sub">últimos 5 minutos</div></div><div class="np-card"><div class="np-label">Visitantes hoje</div><div id="np-today" class="np-value">—</div><div class="np-sub">pessoas únicas</div></div><div class="np-card"><div class="np-label">Visitas hoje</div><div id="np-visits" class="np-value">—</div><div class="np-sub">entradas registradas</div></div><div class="np-card"><div class="np-label">Últimos 7 dias</div><div id="np-7d" class="np-value">—</div><div class="np-sub">visitantes únicos</div></div><div class="np-card"><div class="np-label">Total</div><div id="np-total" class="np-value">—</div><div class="np-sub">visitantes únicos</div></div></div><div class="np-table" id="np-recent"><div class="np-refresh">Carregando visitantes…</div></div>`;
+ const hero=app.querySelector('.hero'),stats=app.querySelector('.stats');if(stats)app.insertBefore(box,stats);else if(hero)hero.after(box);else app.prepend(box);
+}
+async function loadAdminAnalytics(){
+ try{
+  const sb=await getClient();const r=await sb.rpc('admin_site_analytics');if(r.error)throw r.error;const a=Array.isArray(r.data)?r.data[0]:r.data||{};
+  [['np-online',a.online_now],['np-today',a.visitors_today],['np-visits',a.visits_today],['np-7d',a.visitors_7d],['np-total',a.total_visitors]].forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.textContent=Number(v||0).toLocaleString('pt-BR')});
+  const q=await sb.rpc('admin_recent_visitors',{p_limit:12});if(q.error)throw q.error;const rows=q.data||[];const el=document.getElementById('np-recent');
+  el.innerHTML=rows.length?`<table><thead><tr><th>Última atividade</th><th>Visitas</th><th>Página</th><th>Origem</th><th>Navegador</th></tr></thead><tbody>${rows.map(v=>`<tr><td>${esc(v.last_seen?new Date(v.last_seen).toLocaleString('pt-BR'):'—')}</td><td>${esc(v.visit_count)}</td><td>${esc(v.last_path||'—')}</td><td>${esc(v.last_referrer||'Direto')}</td><td>${esc((v.user_agent||'—').slice(0,100))}</td></tr>`).join('')}</tbody></table>`:'<div class="np-refresh">Nenhum visitante registrado ainda.</div>';
+ }catch(e){const el=document.getElementById('np-recent');if(el)el.innerHTML=`<div class="np-refresh">Não foi possível carregar os dados: ${esc(e.message||'erro')}</div>`}
+}
+async function setupAdmin(){
+ if(!/admin-v3\.html$/i.test(location.pathname))return;
+ const s=await session();if(!s)return;
+ try{const sb=await getClient();const r=await sb.rpc('is_admin');if(r.error||r.data!==true)return;adminMode=true;injectAdminBlock();await loadAdminAnalytics();setInterval(loadAdminAnalytics,30000)}catch(e){console.warn('[SiteAgora]',e)}
+}
+async function start(){
+ const s=await refreshAuthUI();
+ await setupAdmin();
+ if(!adminMode){ping();setInterval(ping,60000)}
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
