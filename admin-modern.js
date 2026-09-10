@@ -70,7 +70,14 @@ function setActive(name){
 
 function showTab(name){
  document.querySelectorAll('.section.tab').forEach(section=>section.classList.add('hidden'));
- if(name!=='overview'){
+ const analytics=document.getElementById('np-analytics');
+ if(name==='analytics'){
+   if(window.NP_ADMIN_ANALYTICS?.show)window.NP_ADMIN_ANALYTICS.show();
+   else if(analytics)analytics.classList.remove('hidden');
+ }else if(analytics){
+   analytics.classList.add('hidden');
+ }
+ if(name!=='overview'&&name!=='analytics'){
    const target=document.getElementById(name);
    if(target)target.classList.remove('hidden');
  }
@@ -89,6 +96,7 @@ function buildSidebar(){
   <div class="np-side-label">Painel</div>
   <div class="np-side-menu">
    <button class="np-side-btn active" data-tab="overview"><span class="np-side-icon">⌂</span><span>Visão geral</span></button>
+   <button class="np-side-btn" data-tab="analytics"><span class="np-side-icon">◔</span><span>Visitas</span></button>
    <button class="np-side-btn" data-tab="payments"><span class="np-side-icon">▣</span><span>Pagamentos</span></button>
    <button class="np-side-btn" data-tab="students"><span class="np-side-icon">♙</span><span>Alunos</span></button>
    <button class="np-side-btn" data-tab="courses"><span class="np-side-icon">▤</span><span>Cursos</span></button>
