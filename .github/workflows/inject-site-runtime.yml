@@ -68,23 +68,16 @@ jobs:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
 
-          # Melhora visual da seção de planos da página principal.
+          # Remove as decorações dos cards de planos.
           p = root / 'visitor-tracker.js'
           if p.exists():
               text = p.read_text(encoding='utf-8')
-              if '.np-price-deco' not in text:
-                  css_old = '#np-pricing .np-price-grid{'
-                  css_new = '.np-price-deco{position:absolute;z-index:2;pointer-events:none;text-align:center;font-weight:900;line-height:1.35}.np-price-deco.left{left:5px;top:18px;width:78px;color:#62c3ed}.np-price-deco.right{right:5px;top:20px;width:82px;color:#e4c64a}.np-price-deco.top{right:8px;top:-4px;width:105px;color:#e4c64a}.np-price-deco .np-deco-icon{display:block;font-size:48px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35))}.np-price-deco .np-deco-text{font-size:11px;font-style:italic;letter-spacing:.2px}.np-price-deco .np-arrow{display:block;font-size:26px;margin-top:6px}.np-price-deco.top .np-deco-icon{font-size:28px}.np-price-deco.top .np-deco-text{font-size:10px}#np-pricing .np-price-grid{'
-                  if css_old not in text:
-                      raise SystemExit('pricing CSS marker not found')
-                  text = text.replace(css_old, css_new, 1)
-                  text = text.replace('@media(max-width:900px){', '@media(max-width:1050px){#np-pricing .np-price-deco{display:none}}@media(max-width:900px){', 1)
-                  html_old = '<div class="wrap"><div class="np-price-grid">'
-                  html_new = '<div class="wrap"><div class="np-price-deco top"><span class="np-deco-icon">↗</span><span class="np-deco-text">Acompanhe seu progresso e evolua!</span></div><div class="np-price-deco left"><span class="np-deco-icon">🎓</span><span class="np-deco-text">Seu futuro começa aqui!</span><span class="np-arrow">↘</span></div><div class="np-price-deco right"><span class="np-deco-icon">🏆</span><span class="np-deco-text">Disciplina hoje.<br>Aprovação amanhã!</span><span class="np-arrow">↙</span></div><div class="np-price-grid">'
-                  if html_old not in text:
-                      raise SystemExit('pricing HTML marker not found')
-                  text = text.replace(html_old, html_new, 1)
-                  p.write_text(text, encoding='utf-8')
+              new = text
+              new = re.sub(r'\.np-price-deco\{.*?\}\.np-price-deco\.left\{.*?\}\.np-price-deco\.right\{.*?\}\.np-price-deco\.top\{.*?\}\.np-price-deco \.np-deco-icon\{.*?\}\.np-price-deco \.np-deco-text\{.*?\}\.np-price-deco \.np-arrow\{.*?\}\.np-price-deco\.top \.np-deco-icon\{.*?\}\.np-price-deco\.top \.np-deco-text\{.*?\}', '', new, count=1, flags=re.S)
+              new = new.replace('@media(max-width:1050px){#np-pricing .np-price-deco{display:none}}', '', 1)
+              new = re.sub(r'<div class="np-price-deco top">.*?</div><div class="np-price-deco left">.*?</div><div class="np-price-deco right">.*?</div>', '', new, count=1, flags=re.S)
+              if new != text:
+                  p.write_text(new, encoding='utf-8')
                   changed.append('visitor-tracker.js')
 
           print(f'Normalized {len(changed)} files')
@@ -99,5 +92,5 @@ jobs:
             exit 0
           fi
           git add -A
-          git commit -m "chore: improve free-test navigation and plan icon"
+          git commit -m "chore: remove pricing card decorations"
           git push
