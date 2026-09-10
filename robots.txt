@@ -7,4 +7,4 @@ Disallow: /meu-plano.html
 Disallow: /minha-conta.html
 Disallow: /curso.html
 Disallow: /login.html
-Sitemap: https://rhianmello.github.io/aprovaai/sitemap.xml
+Sitemap: https://www.nospassa.com.br/sitemap.xml
