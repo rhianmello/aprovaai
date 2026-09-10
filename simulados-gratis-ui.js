@@ -11,6 +11,7 @@ function referrerCourse(){
   return'';
 }
 function setup(){
+  const style=document.createElement('style');style.textContent='@media(max-width:600px){.actions{display:flex!important}}';document.head.appendChild(style);
   const params=new URLSearchParams(location.search),slug=(params.get('course')||'').trim()||referrerCourse();
   if(!slug)return;
   const choices=document.getElementById('choices'),sim=document.getElementById('sim');
