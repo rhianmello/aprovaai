@@ -1,0 +1,66 @@
+name: Inject site runtime
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add visitor tracker to HTML pages
+        shell: python
+        run: |
+          from pathlib import Path
+          import os
+
+          root = Path('.')
+          changed = []
+          tracker = 'visitor-tracker.js'
+          supabase_tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>'
+
+          for p in root.rglob('*.html'):
+              if '.git' in p.parts:
+                  continue
+              text = p.read_text(encoding='utf-8')
+              rel = os.path.relpath(tracker, p.parent).replace(os.sep, '/')
+              tag = f'<script src="{rel}"></script>'
+              new = text
+
+              if tag not in new:
+                  marker = '</head>'
+                  if marker.lower() in new.lower():
+                      i = new.lower().rfind(marker.lower())
+                      new = new[:i] + tag + new[i:]
+                  elif '</body>' in new.lower():
+                      i = new.lower().rfind('</body>')
+                      new = new[:i] + tag + new[i:]
+
+              if p.as_posix() == 'simulados-gratis.html' and supabase_tag not in new:
+                  i = new.lower().rfind('</head>')
+                  if i >= 0:
+                      new = new[:i] + supabase_tag + new[i:]
+
+              if new != text:
+                  p.write_text(new, encoding='utf-8')
+                  changed.append(p.as_posix())
+
+          print(f'Updated {len(changed)} HTML pages')
+          for x in changed:
+              print(x)
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git add '*.html' '**/*.html'
+          git commit -m "chore: enable site-wide visitor tracking"
+          git push
