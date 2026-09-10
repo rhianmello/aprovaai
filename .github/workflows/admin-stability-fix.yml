@@ -20,7 +20,6 @@ jobs:
 
           lock = "lock:async(_name,_acquireTimeout,fn)=>await fn()"
 
-          # Analytics e tracker não podem disputar o Navigator Lock da autenticação.
           p = Path('admin-dashboard.js')
           s = p.read_text(encoding='utf-8')
           old = "auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}"
@@ -28,7 +27,6 @@ jobs:
           if old in s:
               s = s.replace(old, new, 1)
               p.write_text(s, encoding='utf-8')
-              print('Dashboard: lock ajustado')
 
           p = Path('visitor-tracker.js')
           s = p.read_text(encoding='utf-8')
@@ -37,32 +35,22 @@ jobs:
           if old in s:
               s = s.replace(old, new, 1)
               p.write_text(s, encoding='utf-8')
-              print('Tracker: lock ajustado')
-          elif lock in s:
-              print('Tracker: lock já presente')
-          else:
-              print('Tracker: padrão não localizado')
 
-          # Expõe o cliente principal para módulos auxiliares futuros.
           p = Path('admin-v3.html')
           s = p.read_text(encoding='utf-8')
           marker = "sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,lock:async(_name,_acquireTimeout,fn)=>await fn()}});"
           if marker in s and 'window.__NP_ADMIN_SB=sb' not in s:
               s = s.replace(marker, marker + "window.__NP_ADMIN_SB=sb;", 1)
-              p.write_text(s, encoding='utf-8')
-              print('ADM: cliente principal exposto')
 
-          # Força o navegador a buscar os módulos atualizados.
-          p = Path('admin-v3.html')
-          s = p.read_text(encoding='utf-8')
-          for old_tag, new_tag in {
-              'admin-modern.js"': 'admin-modern.js?v=20260910-3"',
-              'admin-dashboard.js"': 'admin-dashboard.js?v=20260910-3"',
-              'visitor-tracker.js"': 'visitor-tracker.js?v=20260910-3"',
-          }.items():
-              if new_tag not in s and old_tag in s:
-                  s = s.replace(old_tag, new_tag, 1)
-          p.write_text(s, encoding='utf-8')
+          import re
+          s = re.sub(r'<script\s+src=["\']admin-modern\.js(?:\?[^"\']*)?["\']\s*></script>', '', s, flags=re.I)
+          s = re.sub(r'<script\s+src=["\']admin-dashboard\.js(?:\?[^"\']*)?["\']\s*></script>', '', s, flags=re.I)
+          s = re.sub(r'<script\s+src=["\']visitor-tracker\.js(?:\?[^"\']*)?["\']\s*></script>', '', s, flags=re.I)
+          low=s.lower(); marker_head='</head>'; i=low.rfind(marker_head)
+          if i<0: raise SystemExit('admin-v3.html sem </head>')
+          tags='''<script src="admin-dashboard.js?v=20260910-3"></script><script src="visitor-tracker.js?v=20260910-3"></script><script src="admin-modern.js?v=20260910-3"></script>'''
+          s=s[:i]+tags+s[i:]
+          p.write_text(s,encoding='utf-8')
 
       - name: Commit e publicar
         shell: bash
@@ -74,5 +62,5 @@ jobs:
             echo 'Nenhuma alteração necessária.'
             exit 0
           fi
-          git commit -m 'fix: reforçar estabilidade e cache do ADM'
+          git commit -m 'fix: normalize admin runtime scripts'
           git push
