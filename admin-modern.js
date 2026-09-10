@@ -71,12 +71,14 @@ function setActive(name){
 function showTab(name){
  document.querySelectorAll('.section.tab').forEach(section=>section.classList.add('hidden'));
  const analytics=document.getElementById('np-analytics');
+ const siteAgora=document.getElementById('np-site-agora');
  if(name==='analytics'){
    if(window.NP_ADMIN_ANALYTICS?.show)window.NP_ADMIN_ANALYTICS.show();
    else if(analytics)analytics.classList.remove('hidden');
  }else if(analytics){
    analytics.classList.add('hidden');
  }
+ if(siteAgora)siteAgora.classList.toggle('hidden',name!=='overview');
  if(name!=='overview'&&name!=='analytics'){
    const target=document.getElementById(name);
    if(target)target.classList.remove('hidden');
