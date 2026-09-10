@@ -1,0 +1,45 @@
+name: Modernizar ADM
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  admin-modern:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject admin-modern.js
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('admin-v3.html')
+          text = p.read_text(encoding='utf-8')
+          tag = '<script src="admin-modern.js"></script>'
+          if tag not in text:
+              low = text.lower()
+              marker = '</head>'
+              i = low.rfind(marker)
+              if i < 0:
+                  raise SystemExit('admin-v3.html sem </head>')
+              text = text[:i] + tag + text[i:]
+              p.write_text(text, encoding='utf-8')
+              print('Injected admin-modern.js')
+          else:
+              print('admin-modern.js already injected')
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git add admin-v3.html
+          git commit -m "chore: inject modern admin interface"
+          git push
