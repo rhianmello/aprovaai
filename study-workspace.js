@@ -1,6 +1,9 @@
 /* Nós Passa — Workspace de estudo integrado ao Meu Plano. */
 (function(){
 'use strict';
+/* Singleton: evita duas instâncias quando o navegador reutiliza/cacheia a página. */
+if(window.__NP_STUDY_WORKSPACE_INITIALIZED)return;
+window.__NP_STUDY_WORKSPACE_INITIALIZED=true;
 const qs=new URLSearchParams(location.search),courseSlug=(qs.get('course')||'').trim();
 if(courseSlug!=='transpetro')return;
 const $=id=>document.getElementById(id);
@@ -18,15 +21,31 @@ function injectStyle(){
 #npStudyWorkspace .ws-btn.close{background:#e4c64a;color:#111;border-color:#e4c64a}
 #npStudyWorkspace iframe{width:100%;height:100%;border:0;background:#070a0e}
 body.np-workspace-open{overflow:hidden}
-body.np-workspace-open .timer-sheet{z-index:220;right:28px;bottom:28px;width:280px;padding:12px;border-radius:14px}
+/* Desktop: painel compacto no canto, sem esconder a questão. */
+body.np-workspace-open .timer-sheet{z-index:220;right:20px;bottom:20px;width:270px;padding:11px;border-radius:14px}
 body.np-workspace-open .timer-sheet .timer-label{font-size:9px}
-body.np-workspace-open .timer-sheet .timer-title{font-size:15px;margin-top:4px}
+body.np-workspace-open .timer-sheet .timer-title{font-size:15px;margin-top:3px}
 body.np-workspace-open .timer-sheet .timer-topic{font-size:10px}
-body.np-workspace-open .timer-sheet .timer-time{font-size:28px;margin:9px 0 4px;letter-spacing:0}
+body.np-workspace-open .timer-sheet .timer-time{font-size:27px;margin:8px 0 3px;letter-spacing:0}
 body.np-workspace-open .timer-sheet .timer-planned{font-size:10px}
-body.np-workspace-open .timer-sheet .timer-actions{gap:5px;margin-top:8px}
+body.np-workspace-open .timer-sheet .timer-actions{gap:5px;margin-top:7px}
 body.np-workspace-open .timer-sheet .timer-actions .btn{padding:7px 8px;font-size:11px}
-@media(max-width:700px){#npStudyWorkspace{inset:7px;border-radius:12px}body.np-workspace-open .timer-sheet{right:14px;bottom:14px;width:245px}}
+/* Mobile: transforma o relógio em uma barra fina, em vez de um cartão que cobre as questões. */
+@media(max-width:700px){
+ #npStudyWorkspace{inset:0;border-radius:0}
+ #npStudyWorkspace .ws-head{height:52px;flex-basis:52px;padding:0 9px;gap:6px}
+ #npStudyWorkspace .ws-title{font-size:12px}
+ #npStudyWorkspace .ws-title small{font-size:9px}
+ #npStudyWorkspace .ws-actions{gap:4px}
+ #npStudyWorkspace .ws-btn{padding:7px 8px;font-size:10px}
+ #npStudyWorkspace #npStudyNewTab{display:none}
+ body.np-workspace-open .timer-sheet{left:8px;right:8px;bottom:8px;width:auto;height:58px;padding:7px 8px;border-radius:12px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:7px}
+ body.np-workspace-open .timer-sheet .timer-label,body.np-workspace-open .timer-sheet .timer-topic,body.np-workspace-open .timer-sheet .timer-planned{display:none}
+ body.np-workspace-open .timer-sheet .timer-title{font-size:11px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body.np-workspace-open .timer-sheet .timer-time{font-size:20px;margin:0;letter-spacing:0;white-space:nowrap}
+ body.np-workspace-open .timer-sheet .timer-actions{display:flex;gap:4px;margin:0}
+ body.np-workspace-open .timer-sheet .timer-actions .btn{min-width:48px;padding:7px 6px;font-size:9px;border-radius:8px}
+}
 `;
  document.head.appendChild(s);
 }
@@ -36,6 +55,7 @@ function mount(){
  const el=document.createElement('section');el.id='npStudyWorkspace';el.innerHTML=`<header class="ws-head"><div class="ws-title">📚 Sessão de estudo<small id="npStudyTopic">Questões da preparação</small></div><div class="ws-actions"><button class="ws-btn" id="npStudyNewTab" type="button">↗ Abrir em nova aba</button><button class="ws-btn close" id="npStudyClose" type="button">Continuar no plano</button></div></header><iframe id="npStudyFrame" title="Questões da preparação" loading="eager"></iframe>`;
  document.body.appendChild(el);
  $('npStudyClose').onclick=close;
+ /* Nova aba só é aberta por ação explícita do usuário. Iniciar nunca chama window.open. */
  $('npStudyNewTab').onclick=()=>{const u=buildUrl();if(u)window.open(u,'_blank','noopener,noreferrer')};
 }
 function buildUrl(){if(!currentTopic)return `questoes-academicas.html?course=transpetro`;return `questoes-academicas.html?course=transpetro&topic=${encodeURIComponent(currentTopic)}`}
