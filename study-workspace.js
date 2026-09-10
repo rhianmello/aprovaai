@@ -53,41 +53,38 @@ function close(){
  $('npStudyWorkspace')?.classList.remove('open');
  document.body.classList.remove('np-workspace-open');
 }
-async function getActivityTopic(id){
- try{
-  const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
-  const sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
-  const{data,error}=await sb.from('study_plan_activities').select('topic,subject').eq('id',id).maybeSingle();
-  if(error)throw error;
-  return data||{};
- }catch(e){console.warn('[Workspace] não foi possível carregar a atividade',e);return {}}
+async function sbClient(){
+ const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
+ return supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
 }
-async function hasRunningSessionForActivity(id){
- try{
-  const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
-  const sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
-  const{data,error}=await sb.from('study_sessions').select('id,status,plan_activity_id').eq('plan_activity_id',id).in('status',['running','paused']).maybeSingle();
-  if(error)throw error;
-  return !!data;
- }catch(e){console.warn('[Workspace] não foi possível validar a sessão',e);return false}
+async function getActivityTopic(id){
+ try{const sb=await sbClient();const{data,error}=await sb.from('study_plan_activities').select('topic,subject').eq('id',id).maybeSingle();if(error)throw error;return data||{}}
+ catch(e){console.warn('[Workspace] não foi possível carregar a atividade',e);return {}}
+}
+async function getSessionByActivity(id){
+ try{const sb=await sbClient();const{data,error}=await sb.from('study_sessions').select('id,status,plan_activity_id').eq('plan_activity_id',id).in('status',['running','paused']).maybeSingle();if(error)throw error;return data||null}
+ catch(e){console.warn('[Workspace] não foi possível validar a sessão',e);return null}
 }
 function bindStart(){
- if(typeof window.startActivity!=='function'||window.startActivity.__npWorkspaceWrapped)return;
- const original=window.startActivity;
- const wrapped=async function(id){
-  const activity=await getActivityTopic(id);
-  const result=await original(id);
-  const started=await hasRunningSessionForActivity(id);
-  if(started&&activity?.topic)open(activity.topic);
-  return result;
- };
- wrapped.__npWorkspaceWrapped=true;
- window.startActivity=wrapped;
+ if(typeof window.startActivity==='function'&&!window.startActivity.__npWorkspaceWrapped){
+  const original=window.startActivity;
+  const wrapped=async function(id){const activity=await getActivityTopic(id);const result=await original(id);const started=await getSessionByActivity(id);if(started?.status==='running'&&activity?.topic)open(activity.topic);return result};
+  wrapped.__npWorkspaceWrapped=true;window.startActivity=wrapped;
+ }
+ if(typeof window.resumeSession==='function'&&!window.resumeSession.__npWorkspaceWrapped){
+  const original=window.resumeSession;
+  const wrapped=async function(id){const activity=await getActivityTopicFromSession(id);const result=await original(id);const started=await getSessionById(id);if(started?.status==='running'&&activity?.topic)open(activity.topic);return result};
+  wrapped.__npWorkspaceWrapped=true;window.resumeSession=wrapped;
+ }
 }
-function init(){mount();bindStart();
- const observer=new MutationObserver(()=>bindStart());
- observer.observe(document.body,{childList:true,subtree:true});
- window.NPStudyWorkspace={open,close};
+async function getActivityTopicFromSession(sessionId){
+ try{const sb=await sbClient();const{data,error}=await sb.from('study_sessions').select('plan_activity_id,study_plan_activities(topic,subject)').eq('id',sessionId).maybeSingle();if(error)throw error;return data?.study_plan_activities||{}}
+ catch(e){console.warn('[Workspace] não foi possível localizar o tópico da sessão',e);return {}}
 }
+async function getSessionById(id){
+ try{const sb=await sbClient();const{data,error}=await sb.from('study_sessions').select('id,status').eq('id',id).maybeSingle();if(error)throw error;return data||null}
+ catch(e){return null}
+}
+function init(){mount();bindStart();const observer=new MutationObserver(()=>bindStart());observer.observe(document.body,{childList:true,subtree:true});window.NPStudyWorkspace={open,close}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
