@@ -18,39 +18,48 @@ jobs:
         run: |
           from pathlib import Path
 
-          # O ADM usa mais de um cliente Supabase (autenticação + analytics + tracker).
-          # Todos precisam usar a mesma política de lock para não disputarem o Navigator Lock.
-          for name in ['admin-dashboard.js', 'visitor-tracker.js']:
-              p = Path(name)
-              s = p.read_text(encoding='utf-8')
-              old = "auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}"
-              new = "auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,lock:async(_name,_acquireTimeout,fn)=>await fn()}"
-              if old in s and 'lock:async(_name,_acquireTimeout,fn)' not in s:
-                  s = s.replace(old, new)
-                  p.write_text(s, encoding='utf-8')
-                  print(f'Lock ajustado em {name}')
-              else:
-                  print(f'Sem alteração em {name}')
+          lock = "lock:async(_name,_acquireTimeout,fn)=>await fn()"
 
-          # Deixa a inicialização principal do ADM acessível aos módulos auxiliares.
-          p = Path('admin-v3.html')
+          # Analytics e tracker não podem disputar o Navigator Lock da autenticação.
+          p = Path('admin-dashboard.js')
           s = p.read_text(encoding='utf-8')
-          old = "sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,lock:async(_name,_acquireTimeout,fn)=>await fn()}});"
-          new = old + "window.__NP_ADMIN_SB=sb;"
-          if old in s and 'window.__NP_ADMIN_SB=sb' not in s:
+          old = "auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}"
+          new = "auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false," + lock + "}"
+          if old in s:
               s = s.replace(old, new, 1)
               p.write_text(s, encoding='utf-8')
-              print('Cliente principal exposto para os módulos do ADM')
+              print('Dashboard: lock ajustado')
 
-          # Cache-busting dos três módulos do ADM para evitar que o navegador mantenha versões antigas.
+          p = Path('visitor-tracker.js')
+          s = p.read_text(encoding='utf-8')
+          old = "return api.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}})"
+          new = "return api.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false," + lock + "}})"
+          if old in s:
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+              print('Tracker: lock ajustado')
+          elif lock in s:
+              print('Tracker: lock já presente')
+          else:
+              print('Tracker: padrão não localizado')
+
+          # Expõe o cliente principal para módulos auxiliares futuros.
           p = Path('admin-v3.html')
           s = p.read_text(encoding='utf-8')
-          replacements = {
-              'admin-modern.js"': 'admin-modern.js?v=20260910-2"',
-              'admin-dashboard.js"': 'admin-dashboard.js?v=20260910-2"',
-              'visitor-tracker.js"': 'visitor-tracker.js?v=20260910-2"',
-          }
-          for old_tag, new_tag in replacements.items():
+          marker = "sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,lock:async(_name,_acquireTimeout,fn)=>await fn()}});"
+          if marker in s and 'window.__NP_ADMIN_SB=sb' not in s:
+              s = s.replace(marker, marker + "window.__NP_ADMIN_SB=sb;", 1)
+              p.write_text(s, encoding='utf-8')
+              print('ADM: cliente principal exposto')
+
+          # Força o navegador a buscar os módulos atualizados.
+          p = Path('admin-v3.html')
+          s = p.read_text(encoding='utf-8')
+          for old_tag, new_tag in {
+              'admin-modern.js"': 'admin-modern.js?v=20260910-3"',
+              'admin-dashboard.js"': 'admin-dashboard.js?v=20260910-3"',
+              'visitor-tracker.js"': 'visitor-tracker.js?v=20260910-3"',
+          }.items():
               if new_tag not in s and old_tag in s:
                   s = s.replace(old_tag, new_tag, 1)
           p.write_text(s, encoding='utf-8')
@@ -65,5 +74,5 @@ jobs:
             echo 'Nenhuma alteração necessária.'
             exit 0
           fi
-          git commit -m 'fix: estabilizar inicialização e cache do ADM'
+          git commit -m 'fix: reforçar estabilidade e cache do ADM'
           git push
