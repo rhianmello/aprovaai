@@ -125,6 +125,14 @@ function buildSidebar(){
  if(out)out.addEventListener('click',()=>{if(typeof window.logout==='function')window.logout()});
 }
 
+function loadAnalyticsModule(){
+ if(document.querySelector('script[data-np-admin-analytics]'))return;
+ const s=document.createElement('script');
+ s.src='admin-analytics.js?v=20260910-1';
+ s.dataset.npAdminAnalytics='1';
+ document.head.appendChild(s);
+}
+
 function protectStudentToggle(){
  setTimeout(()=>{
   if(typeof window.toggleStudent!=='function')return;
@@ -147,6 +155,7 @@ function init(){
  injectCss();
  buildSidebar();
  showTab('overview');
+ loadAnalyticsModule();
  protectStudentToggle();
 }
 
