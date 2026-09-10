@@ -32,16 +32,18 @@ jobs:
               new = text
 
               if tag not in new:
+                  low = new.lower()
                   marker = '</head>'
-                  if marker.lower() in new.lower():
-                      i = new.lower().rfind(marker.lower())
+                  if marker in low:
+                      i = low.rfind(marker)
                       new = new[:i] + tag + new[i:]
-                  elif '</body>' in new.lower():
-                      i = new.lower().rfind('</body>')
+                  elif '</body>' in low:
+                      i = low.rfind('</body>')
                       new = new[:i] + tag + new[i:]
 
               if p.as_posix() == 'simulados-gratis.html' and supabase_tag not in new:
-                  i = new.lower().rfind('</head>')
+                  low = new.lower()
+                  i = low.rfind('</head>')
                   if i >= 0:
                       new = new[:i] + supabase_tag + new[i:]
 
@@ -61,6 +63,6 @@ jobs:
             echo "No changes needed"
             exit 0
           fi
-          git add '*.html' '**/*.html'
+          git add -A
           git commit -m "chore: enable site-wide visitor tracking"
           git push
