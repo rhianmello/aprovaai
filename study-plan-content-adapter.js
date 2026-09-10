@@ -1,73 +1,12 @@
-/* Nós Passa — adaptador de disciplina/assunto do Meu Plano.
- * Lê os mesmos bancos já usados pelos ambientes existentes.
- * Não altera nem duplica o banco de questões.
- */
+/* Nós Passa — adaptador de disciplina/assunto do Meu Plano. */
 (function(){
-  const ASSETS={
-    'ace-marica':{json:'ACE/banco-questoes/banco_validado.json'},
-    'transpetro':{json:'TRANSPETRO/banco-questoes/banco_validado.json',scripts:[
-      'TRANSPETRO/banco-questoes/transpetro_banco_curado.js',
-      'TRANSPETRO/banco-questoes/edital_2026_sap.js',
-      'TRANSPETRO/banco-questoes/edital_2026_sistemas_bi.js',
-      'TRANSPETRO/banco-questoes/edital_2026_parte3.js'
-    ]},
-    'inspetor-eletrica':{scripts:[
-      'INSPETOR_ELETRICA/banco-questoes/inspetor_eletrica_banco.js',
-      'INSPETOR_ELETRICA/banco-questoes/inspetor_eletrica_banco_geral.js',
-      'INSPETOR_ELETRICA/inspetor_eletrica_expansao.js'
-    ]}
-  };
-  const GROUPERS={
-    'ace-marica':()=> 'ACE / SUS',
-    'transpetro':q=>{
-      const s=norm([q.disciplina,q.assunto,q.subassunto,q.enunciado].join(' '));
-      if(s.includes('portugues'))return'Português';
-      if(s.includes('ingles'))return'Inglês';
-      if(/sap|erp|\bfi\b|\bmm\b|\bsd\b|\bpm\b|fiori|abap/.test(s))return'SAP';
-      if(/etl|warehouse|data mart|olap|data mining|bsc|modelagem dimensional|\bbi\b/.test(s))return'BI';
-      if(/pmbok|scrum|kanban|agile|gestao de projeto/.test(s))return'Gestão';
-      return'Sistemas';
-    },
-    'inspetor-eletrica':q=>{
-      const s=norm([q.disciplina,q.assunto,q.subassunto,q.enunciado].join(' '));
-      if(s.includes('portugues'))return'Português';
-      if(s.includes('matematica'))return'Matemática';
-      if(s.includes('fisica'))return'Física';
-      if(s.includes('qualidade')||s.includes('iso'))return'Qualidade';
-      if(s.includes('metrologia')||s.includes('unidade')||s.includes('escala')||s.includes('coordenada'))return'Metrologia';
-      if(s.includes('seguranca')||s.includes('higiene'))return'Segurança';
-      if(s.includes('eletrotecnica'))return'Eletrotécnica';
-      if(s.includes('maquina')||s.includes('dispositivo'))return'Máquinas e dispositivos';
-      if(s.includes('medic')||s.includes('megometro')||s.includes('aterramento')||s.includes('isolacao'))return'Medições elétricas';
-      if(s.includes('desenho')||s.includes('unifilar')||s.includes('simbologia'))return'Desenho técnico';
-      return'Outros';
-    }
-  };
-  function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
-  function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='./'+src+'?v=20260909-1';s.onload=resolve;s.onerror=()=>reject(new Error('Falha ao carregar '+src));document.head.appendChild(s)})}
-  async function load(cfg){
-    const slug=String(cfg||''),a=ASSETS[slug];
-    if(!a)throw new Error('Curso sem adaptador de conteúdo: '+slug);
-    let q=[];
-    if(a.json){
-      const r=await fetch('./'+a.json+'?'+Date.now());
-      if(!r.ok)throw new Error('Banco de questões indisponível.');
-      const j=await r.json();q=q.concat(Array.isArray(j)?j:(j.questoes||[]));
-    }
-    for(const src of(a.scripts||[]))await loadScript(src);
-    if(slug==='transpetro')q=q.concat(window.TRANSPETRO_CURADO||[],window.TRANSPETRO_EDITAL_2026||[],window.TRANSPETRO_SISTEMAS_BI||[],window.TRANSPETRO_PARTE3||[]);
-    if(slug==='inspetor-eletrica')q=q.concat(window.INSPETOR_ELETRICA_BANK||[],window.INSPETOR_ELETRICA_GERAL_BANK||[],window.INSPETOR_ELETRICA_EXPANSAO_BANK||[]);
-    const group=GROUPERS[slug]||((x)=>x.disciplina||'Outros'),tree=new Map();
-    q.forEach(item=>{
-      const subject=String(group(item)||'').trim();
-      const topic=String(item.assunto||item.subassunto||'').trim();
-      if(!subject||!topic)return;
-      if(!tree.has(subject))tree.set(subject,new Set());
-      tree.get(subject).add(topic);
-    });
-    const subjects=[...tree.keys()].sort((a,b)=>a.localeCompare(b,'pt-BR')),topics={};
-    subjects.forEach(s=>topics[s]=[...tree.get(s)].sort((a,b)=>a.localeCompare(b,'pt-BR')));
-    return{subjects,topics,questionCount:q.length};
-  }
-  window.NPStudyContent={load};
+'use strict';
+const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
+const ASSETS={'ace-marica':{json:'ACE/banco-questoes/banco_validado.json'},'transpetro':{json:'TRANSPETRO/banco-questoes/banco_validado.json',scripts:['TRANSPETRO/banco-questoes/transpetro_banco_curado.js','TRANSPETRO/banco-questoes/edital_2026_sap.js','TRANSPETRO/banco-questoes/edital_2026_sistemas_bi.js','TRANSPETRO/banco-questoes/edital_2026_parte3.js']},'inspetor-eletrica':{scripts:['INSPETOR_ELETRICA/banco-questoes/inspetor_eletrica_banco.js','INSPETOR_ELETRICA/banco-questoes/inspetor_eletrica_banco_geral.js','INSPETOR_ELETRICA/inspetor_eletrica_expansao.js']}};
+const GROUPERS={'ace-marica':()=> 'ACE / SUS','transpetro':q=>{const s=norm([q.disciplina,q.assunto,q.subassunto,q.enunciado].join(' '));if(s.includes('portugues'))return'Português';if(s.includes('ingles'))return'Inglês';if(/sap|erp|\bfi\b|\bmm\b|\bsd\b|\bpm\b|fiori|abap/.test(s))return'SAP';if(/etl|warehouse|data mart|olap|data mining|bsc|modelagem dimensional|\bbi\b/.test(s))return'BI';if(/pmbok|scrum|kanban|agile|gestao de projeto/.test(s))return'Gestão';return'Sistemas'},'inspetor-eletrica':q=>{const s=norm([q.disciplina,q.assunto,q.subassunto,q.enunciado].join(' '));if(s.includes('portugues'))return'Português';if(s.includes('matematica'))return'Matemática';if(s.includes('fisica'))return'Física';if(s.includes('qualidade')||s.includes('iso'))return'Qualidade';if(s.includes('metrologia')||s.includes('unidade')||s.includes('escala')||s.includes('coordenada'))return'Metrologia';if(s.includes('seguranca')||s.includes('higiene'))return'Segurança';if(s.includes('eletrotecnica'))return'Eletrotécnica';if(s.includes('maquina')||s.includes('dispositivo'))return'Máquinas e dispositivos';if(s.includes('medic')||s.includes('megometro')||s.includes('aterramento')||s.includes('isolacao'))return'Medições elétricas';if(s.includes('desenho')||s.includes('unifilar')||s.includes('simbologia'))return'Desenho técnico';return'Outros'}};
+function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
+function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='./'+src+'?v=20260909-1';s.onload=resolve;s.onerror=()=>reject(new Error('Falha ao carregar '+src));document.head.appendChild(s)})}
+async function loadAcademic(slug){const sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});const{data:c,error:ce}=await sb.from('courses').select('id').eq('slug',slug).maybeSingle();if(ce||!c)throw new Error('Curso acadêmico não encontrado.');const{data:cp,error:cpe}=await sb.from('course_preparations').select('preparation_id').eq('course_id',c.id).eq('active',true).maybeSingle();if(cpe||!cp)throw new Error('Preparação acadêmica não vinculada.');const{data:items,error:ie}=await sb.from('academic_content_items').select('title,academic_subjects(name)').eq('preparation_id',cp.preparation_id).eq('active',true).order('sort_order');if(ie)throw ie;const tree=new Map();(items||[]).forEach(x=>{const s=x.academic_subjects?.name||'Conhecimentos Específicos',t=String(x.title||'').trim();if(!t)return;if(!tree.has(s))tree.set(s,new Set());tree.get(s).add(t)});const subjects=[...tree.keys()].sort((a,b)=>a.localeCompare(b,'pt-BR')),topics={};subjects.forEach(s=>topics[s]=[...tree.get(s)].sort((a,b)=>a.localeCompare(b,'pt-BR')));return{subjects,topics,questionCount:0}}
+async function load(cfg){const slug=String(cfg||''),a=ASSETS[slug];if(!a)return loadAcademic(slug);let q=[];if(a.json){const r=await fetch('./'+a.json+'?'+Date.now());if(!r.ok)throw new Error('Banco de questões indisponível.');const j=await r.json();q=q.concat(Array.isArray(j)?j:(j.questoes||[]))}for(const src of(a.scripts||[]))await loadScript(src);if(slug==='transpetro')q=q.concat(window.TRANSPETRO_CURADO||[],window.TRANSPETRO_EDITAL_2026||[],window.TRANSPETRO_SISTEMAS_BI||[],window.TRANSPETRO_PARTE3||[]);if(slug==='inspetor-eletrica')q=q.concat(window.INSPETOR_ELETRICA_BANK||[],window.INSPETOR_ELETRICA_GERAL_BANK||[],window.INSPETOR_ELETRICA_EXPANSAO_BANK||[]);const group=GROUPERS[slug]||((x)=>x.disciplina||'Outros'),tree=new Map();q.forEach(item=>{const subject=String(group(item)||'').trim(),topic=String(item.assunto||item.subassunto||'').trim();if(!subject||!topic)return;if(!tree.has(subject))tree.set(subject,new Set());tree.get(subject).add(topic)});const subjects=[...tree.keys()].sort((a,b)=>a.localeCompare(b,'pt-BR')),topics={};subjects.forEach(s=>topics[s]=[...tree.get(s)].sort((a,b)=>a.localeCompare(b,'pt-BR')));return{subjects,topics,questionCount:q.length}}
+window.NPStudyContent={load};
 })();
