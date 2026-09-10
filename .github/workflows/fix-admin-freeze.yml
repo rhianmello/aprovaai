@@ -17,17 +17,19 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import re
 
           p = Path('admin-v3.html')
           s = p.read_text(encoding='utf-8')
 
-          # The admin page must own a single Supabase client. Remove auxiliary
-          # runtimes that create competing clients/auth operations on this page.
-          s = re.sub(r'<script\\s+src=["\\'](?:visitor-tracker|admin-dashboard)\\.js(?:\\?[^"\\']*)?["\\']\\s*></script>', '', s, flags=re.I)
+          # Keep the admin page on a single Supabase client.
+          for tag in (
+              '<script src="admin-dashboard.js?v=20260910-3"></script>',
+              '<script src="visitor-tracker.js?v=20260910-3"></script>',
+              '<script src="visitor-tracker.js"></script>',
+          ):
+              s = s.replace(tag, '')
 
-          # Restore the official Supabase Auth lock implementation instead of
-          # overriding it with a no-op lock, which can leave getSession waiting.
+          # Restore Supabase's default Auth lock implementation.
           s = s.replace(',lock:async(_name,_acquireTimeout,fn)=>await fn()', '')
 
           p.write_text(s, encoding='utf-8')
