@@ -1,0 +1,37 @@
+name: Ativar dashboard do ADM v2
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Injetar dashboard no ADM
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin-v3.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="admin-dashboard.js"></script>'
+          if tag not in s:
+              anchor='<script src="admin-modern.js"></script>'
+              if anchor in s:
+                  s=s.replace(anchor,anchor+tag,1)
+              else:
+                  s=s.replace('</head>',tag+'</head>',1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit e publicar
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-v3.html
+          if git diff --cached --quiet; then
+            echo 'Dashboard já está ativo'
+          else
+            git commit -m 'chore: ativar dashboard analitico do ADM'
+            git push
+          fi
