@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin-v2.html
+Disallow: /admin-v3.html
+Disallow: /meu-plano.html
+Disallow: /minha-conta.html
+Disallow: /curso.html
+Disallow: /login.html
+Sitemap: https://rhianmello.github.io/aprovaai/sitemap.xml
