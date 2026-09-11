@@ -45,8 +45,12 @@ jobs:
           landing = Path('transpetro-landing.html').read_text(encoding='utf-8')
           inspector = Path('inspetor_eletrica.html').read_text(encoding='utf-8')
 
+          if 'supabase-js@2' not in index:
+              raise SystemExit('index.html não carrega o cliente Supabase')
+          if 'brazil-map' not in index:
+              raise SystemExit('index.html não carrega o mapa do Brasil')
           if 'concursos.html' not in index:
-              raise SystemExit('index.html não redireciona para concursos.html')
+              raise SystemExit('index.html não possui navegação para concursos.html')
           if 'login.html' not in concursos:
               raise SystemExit('concursos.html não possui entrada de autenticação')
           if 'transpetro-landing.html' not in concursos:
@@ -55,8 +59,20 @@ jobs:
               raise SystemExit('transpetro_cargos.html não possui a trilha SAP')
           if 'inspetor_eletrica.html' not in cargos:
               raise SystemExit('transpetro_cargos.html não possui a trilha Inspetor de Elétrica')
-          if 'checkout.html?course=2' not in landing:
-              raise SystemExit('Landing Transpetro não possui CTA de compra')
+
+          # A landing da Transpetro agora é um catálogo de cargos.
+          # A compra ocorre na preparação específica de cada cargo, portanto
+          # não exigimos mais um CTA de checkout diretamente nesta página.
+          catalog_markers = [
+              'Carregando cargos e preparações',
+              'catalog-section',
+              'Acessar preparação',
+              'supabase.createClient',
+          ]
+          missing_catalog = [m for m in catalog_markers if m not in landing]
+          if missing_catalog:
+              raise SystemExit('Catálogo Transpetro incompleto: ' + ', '.join(missing_catalog))
+
           if 'inspetor_eletrica_expansao.js' not in inspector:
               raise SystemExit('inspetor_eletrica.html não carrega o banco expandido')
           if 'plano_estudo_detalhado.js' not in inspector:
