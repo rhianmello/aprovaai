@@ -12,26 +12,18 @@ body{margin:0;background:#0b0f14;color:#eef2f7;font:15px Arial,sans-serif}.wrap{
 <div class="wrap">
   <div class="card">
     <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div>
-        <h1>Controle QAPI</h1>
-        <div class="muted">Execute o dry-run ou, após confirmação explícita, o primeiro lote real controlado de até 10 questões.</div>
-      </div>
+      <div><h1>Controle QAPI</h1><div class="muted">Consulte o catálogo de matérias, execute o dry-run ou, após confirmação explícita, um lote real controlado de até 10 questões.</div></div>
       <button id="backAdmin" class="secondary" type="button">← Voltar para o Admin</button>
     </div>
     <div id="auth" class="muted" style="margin-top:12px">Validando sessão…</div>
   </div>
   <div class="card">
     <h2>Execução controlada</h2>
-    <div class="muted">O dry-run não escreve dados. A importação real envia uma única requisição com <code>mode: "import"</code>, <code>size: 10</code> e a página informada abaixo. O filtro de matéria é opcional.</div>
-    <div style="margin-top:16px">
-      <label for="materia">Matéria</label>
-      <input id="materia" type="text" maxlength="120" placeholder="Ex.: Português" autocomplete="off" disabled>
-    </div>
-    <div style="margin-top:16px">
-      <label for="page">Página</label>
-      <input id="page" type="number" min="1" step="1" value="1" inputmode="numeric" disabled>
-    </div>
+    <div class="muted">A listagem de matérias e o dry-run não escrevem dados. A importação real envia uma única requisição com <code>mode: "import"</code>, <code>size: 10</code> e a página informada abaixo. O filtro de matéria é opcional.</div>
+    <div style="margin-top:16px"><label for="materia">Matéria</label><input id="materia" type="text" maxlength="120" placeholder="Ex.: Português" autocomplete="off" disabled></div>
+    <div style="margin-top:16px"><label for="page">Página</label><input id="page" type="number" min="1" step="1" value="1" inputmode="numeric" disabled></div>
     <div class="row" style="margin-top:16px">
+      <button id="listMaterias" class="secondary" disabled>Listar matérias da QAPI</button>
       <button id="dryRun" disabled>Testar dry-run — 10 questões</button>
       <button id="realImport" class="real" disabled>Importar lote real — 10 questões</button>
     </div>
@@ -45,147 +37,22 @@ body{margin:0;background:#0b0f14;color:#eef2f7;font:15px Arial,sans-serif}.wrap{
 const U='https://ztqtcbzjesrkuaijmylm.supabase.co';
 const K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
 const client=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $=id=>document.getElementById(id);
-let adminSession=null;
-
+const $=id=>document.getElementById(id);let adminSession=null;
 function esc(v){return String(v??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
-function writeLog(value,cls=''){
-  const el=$('log');
-  el.innerHTML='<span class="'+cls+'">'+esc(typeof value==='string'?value:JSON.stringify(value,null,2))+'</span>';
-  el.scrollTop=el.scrollHeight;
-}
-function errorDetail(error,data){
-  if(data?.error)return data.error;
-  return error?.message||String(error||'Erro desconhecido');
-}
+function writeLog(value,cls=''){const el=$('log');el.innerHTML='<span class="'+cls+'">'+esc(typeof value==='string'?value:JSON.stringify(value,null,2))+'</span>';el.scrollTop=el.scrollHeight;}
+function errorDetail(error,data){if(data?.error)return data.error;return error?.message||String(error||'Erro desconhecido');}
 function selectedMateria(){return $('materia').value.trim();}
-function selectedPage(){
-  const raw=$('page').value.trim();
-  const page=Number(raw);
-  if(!Number.isInteger(page)||page<1){
-    throw new Error('Página inválida. Informe um número inteiro maior ou igual a 1.');
-  }
-  return page;
-}
-function requestBody(mode){
-  const body={mode,size:10,page:selectedPage()};
-  const materia=selectedMateria();
-  if(materia)body.materia=materia;
-  return body;
-}
-function setExecutionDisabled(disabled){
-  $('dryRun').disabled=disabled;
-  $('realImport').disabled=disabled;
-  $('materia').disabled=disabled;
-  $('page').disabled=disabled;
-}
-
+function selectedPage(){const raw=$('page').value.trim();const page=Number(raw);if(!Number.isInteger(page)||page<1)throw new Error('Página inválida. Informe um número inteiro maior ou igual a 1.');return page;}
+function requestBody(mode){const body={mode,size:10,page:selectedPage()};const materia=selectedMateria();if(materia)body.materia=materia;return body;}
+function setExecutionDisabled(disabled){$('listMaterias').disabled=disabled;$('dryRun').disabled=disabled;$('realImport').disabled=disabled;$('materia').disabled=disabled;$('page').disabled=disabled;}
 $('backAdmin').onclick=()=>{window.location.href='admin.html';};
-
-async function init(){
-  // Mesmo fluxo de validação administrativa usado anteriormente nesta página.
-  const r=await client.auth.getSession();
-  const session=r.data.session;
-  if(!session){
-    $('auth').innerHTML='<span class="bad">Sessão não encontrada. Faça login como administrador.</span>';
-    return;
-  }
-  const p=await client.from('profiles').select('role,active,nome,email').eq('id',session.user.id).maybeSingle();
-  if(p.error||!p.data||p.data.active===false||!['admin','super_admin'].includes(String(p.data.role||'').toLowerCase())){
-    $('auth').innerHTML='<span class="bad">Acesso negado: esta página exige perfil administrador.</span>';
-    return;
-  }
-  adminSession=session;
-  $('auth').innerHTML='<span class="ok">Administrador autenticado: '+esc(p.data.nome||p.data.email||session.user.email)+'</span>';
-  $('status').textContent='Pronto para executar o dry-run ou o lote real controlado.';
-  setExecutionDisabled(false);
-  $('dryRun').onclick=runDryRun;
-  $('realImport').onclick=runRealImport;
-}
-
-async function runDryRun(){
-  let body;
-  try{
-    body=requestBody('dry_run');
-  }catch(error){
-    $('status').textContent=error.message;
-    writeLog({ok:false,error:error.message},'bad');
-    $('page').focus();
-    return;
-  }
-  setExecutionDisabled(true);
-  $('status').textContent='Executando dry-run controlado…';
-  writeLog({request:'qapi-bulk-import',...body},'warn');
-  try{
-    const r=await client.auth.getSession();
-    const session=r.data.session;
-    if(!session?.access_token)throw new Error('Sessão administrativa expirada. Faça login novamente.');
-    adminSession=session;
-    const result=await client.functions.invoke('qapi-bulk-import',{
-      headers:{Authorization:'Bearer '+adminSession.access_token},
-      body
-    });
-    if(result.error)throw new Error(errorDetail(result.error,result.data));
-    writeLog(result.data,'ok');
-    $('status').textContent=result.data?.ok?'Dry-run concluído sem escrita no banco.':'Dry-run retornou falha.';
-  }catch(error){
-    writeLog({ok:false,error:error?.message||String(error)},'bad');
-    $('status').textContent='Falha no dry-run. Veja o Log.';
-  }finally{
-    setExecutionDisabled(false);
-  }
-}
-
-async function runRealImport(){
-  let body;
-  try{
-    body=requestBody('import');
-  }catch(error){
-    $('status').textContent=error.message;
-    writeLog({ok:false,error:error.message},'bad');
-    $('page').focus();
-    return;
-  }
-  const materiaLabel=body.materia?' da matéria "'+body.materia+'"':' sem filtro de matéria';
-  const confirmed=window.confirm(
-    'ATENÇÃO: esta ação executará uma importação REAL controlada de até 10 questões'+materiaLabel+' (página '+body.page+'). Deseja continuar?'
-  );
-  if(!confirmed){
-    $('status').textContent='Importação real cancelada. Nenhuma requisição foi enviada.';
-    writeLog({ok:false,cancelled:true,request_sent:false,...body},'warn');
-    return;
-  }
-
-  setExecutionDisabled(true);
-  $('status').textContent='Executando lote real controlado de até 10 questões…';
-  writeLog({request:'qapi-bulk-import',...body},'warn');
-  try{
-    const r=await client.auth.getSession();
-    const session=r.data.session;
-    if(!session?.access_token)throw new Error('Sessão administrativa expirada. Faça login novamente.');
-    adminSession=session;
-    const result=await client.functions.invoke('qapi-bulk-import',{
-      headers:{Authorization:'Bearer '+adminSession.access_token},
-      body
-    });
-    if(result.error){
-      writeLog({data:result.data??null,error:errorDetail(result.error,result.data)},'bad');
-      $('status').textContent='Falha na importação real. Veja a resposta completa no Log.';
-      return;
-    }
-    writeLog(result.data,'ok');
-    $('status').textContent=result.data?.ok?'Lote real controlado concluído.':'A importação real retornou falha. Veja o Log.';
-  }catch(error){
-    writeLog({data:null,error:error?.message||String(error)},'bad');
-    $('status').textContent='Falha na importação real. Veja o Log.';
-  }finally{
-    setExecutionDisabled(false);
-  }
-}
-
-init().catch(error=>{
-  $('auth').innerHTML='<span class="bad">Falha ao inicializar: '+esc(error.message)+'</span>';
-});
+async function currentAdminSession(){const r=await client.auth.getSession();const session=r.data.session;if(!session?.access_token)throw new Error('Sessão administrativa expirada. Faça login novamente.');adminSession=session;return session;}
+async function invokeQapi(body){await currentAdminSession();return client.functions.invoke('qapi-bulk-import',{headers:{Authorization:'Bearer '+adminSession.access_token},body});}
+async function init(){const r=await client.auth.getSession();const session=r.data.session;if(!session){$('auth').innerHTML='<span class="bad">Sessão não encontrada. Faça login como administrador.</span>';return;}const p=await client.from('profiles').select('role,active,nome,email').eq('id',session.user.id).maybeSingle();if(p.error||!p.data||p.data.active===false||!['admin','super_admin'].includes(String(p.data.role||'').toLowerCase())){$('auth').innerHTML='<span class="bad">Acesso negado: esta página exige perfil administrador.</span>';return;}adminSession=session;$('auth').innerHTML='<span class="ok">Administrador autenticado: '+esc(p.data.nome||p.data.email||session.user.email)+'</span>';$('status').textContent='Pronto para listar matérias, executar o dry-run ou o lote real controlado.';setExecutionDisabled(false);$('listMaterias').onclick=runListMaterias;$('dryRun').onclick=runDryRun;$('realImport').onclick=runRealImport;}
+async function runListMaterias(){setExecutionDisabled(true);$('status').textContent='Consultando catálogo oficial de matérias da QAPI…';writeLog({request:'qapi-bulk-import',mode:'list_materias'},'warn');try{const result=await invokeQapi({mode:'list_materias'});if(result.error)throw new Error(errorDetail(result.error,result.data));writeLog(result.data,'ok');$('status').textContent=result.data?.ok?'Matérias da QAPI listadas. Nenhuma escrita no banco foi executada.':'A listagem retornou falha.';}catch(error){writeLog({ok:false,error:error?.message||String(error)},'bad');$('status').textContent='Falha ao listar matérias. Veja o Log.';}finally{setExecutionDisabled(false);}}
+async function runDryRun(){let body;try{body=requestBody('dry_run');}catch(error){$('status').textContent=error.message;writeLog({ok:false,error:error.message},'bad');$('page').focus();return;}setExecutionDisabled(true);$('status').textContent='Executando dry-run controlado…';writeLog({request:'qapi-bulk-import',...body},'warn');try{const result=await invokeQapi(body);if(result.error)throw new Error(errorDetail(result.error,result.data));writeLog(result.data,'ok');$('status').textContent=result.data?.ok?'Dry-run concluído sem escrita no banco.':'Dry-run retornou falha.';}catch(error){writeLog({ok:false,error:error?.message||String(error)},'bad');$('status').textContent='Falha no dry-run. Veja o Log.';}finally{setExecutionDisabled(false);}}
+async function runRealImport(){let body;try{body=requestBody('import');}catch(error){$('status').textContent=error.message;writeLog({ok:false,error:error.message},'bad');$('page').focus();return;}const materiaLabel=body.materia?' da matéria "'+body.materia+'"':' sem filtro de matéria';const confirmed=window.confirm('ATENÇÃO: esta ação executará uma importação REAL controlada de até 10 questões'+materiaLabel+' (página '+body.page+'). Deseja continuar?');if(!confirmed){$('status').textContent='Importação real cancelada. Nenhuma requisição foi enviada.';writeLog({ok:false,cancelled:true,request_sent:false,...body},'warn');return;}setExecutionDisabled(true);$('status').textContent='Executando lote real controlado de até 10 questões…';writeLog({request:'qapi-bulk-import',...body},'warn');try{const result=await invokeQapi(body);if(result.error){writeLog({data:result.data??null,error:errorDetail(result.error,result.data)},'bad');$('status').textContent='Falha na importação real. Veja a resposta completa no Log.';return;}writeLog(result.data,'ok');$('status').textContent=result.data?.ok?'Lote real controlado concluído.':'A importação real retornou falha. Veja o Log.';}catch(error){writeLog({data:null,error:error?.message||String(error)},'bad');$('status').textContent='Falha na importação real. Veja o Log.';}finally{setExecutionDisabled(false);}}
+init().catch(error=>{$('auth').innerHTML='<span class="bad">Falha ao inicializar: '+esc(error.message)+'</span>';});
 </script>
 </body>
 </html>
