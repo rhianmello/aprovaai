@@ -120,29 +120,70 @@ function extractAnswer(question: QapiQuestion, alternatives: Record<string, stri
   return { answer, fieldUsed: found.key };
 }
 
+function normalizedToken(value: unknown) {
+  return text(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function validateQuestion(question: QapiQuestion) {
-  const { alternatives, fieldsUsed } = extractAlternatives(question);
-  const { answer, fieldUsed } = extractAnswer(question, alternatives);
   const errors: string[] = [];
   const warnings: string[] = [];
-  if (!text(question._id)) errors.push("missing_external_id");
-  if (!text(question.enunciado)) errors.push("missing_statement");
+  const externalId = text(question._id);
+  const statement = text(question.enunciado);
+  if (!externalId) errors.push("missing_external_id");
+  if (!statement) errors.push("missing_statement");
+
+  const answerSource = firstValue(question, [
+    "gabarito", "resposta", "answer", "correct_answer", "correctAnswer",
+    "alternativaCorreta", "alternativa_correta", "opcaoCorreta", "opcao_correta",
+  ]);
+  const rawAnswer = optionText(answerSource.value) || text(answerSource.value);
+  const answerToken = normalizedToken(rawAnswer);
+  const typeSource = firstValue(question, [
+    "tipo", "type", "formato", "modalidade", "tipoQuestao", "tipo_questao",
+  ]);
+  const typeToken = normalizedToken(typeSource.value);
+
+  const isTrueFalse =
+    answerToken === "certo" ||
+    answerToken === "errado" ||
+    typeToken.includes("certo errado") ||
+    typeToken.includes("certo ou errado") ||
+    typeToken.includes("verdadeiro falso");
+
+  if (isTrueFalse) {
+    if (answerToken !== "certo" && answerToken !== "errado") {
+      errors.push("invalid_true_false_answer");
+    }
+    return {
+      external_id: externalId,
+      question_type: "certo_errado",
+      valid: errors.length === 0,
+      errors,
+      warnings,
+      raw_payload: question,
+    };
+  }
+
+  const { alternatives } = extractAlternatives(question);
+  const { answer } = extractAnswer(question, alternatives);
   if (!answer) errors.push("invalid_answer");
-  for (const option of ["A", "B", "C", "D"]) if (!alternatives[option]) errors.push("missing_option_" + option);
+  for (const option of ["A", "B", "C", "D"]) {
+    if (!alternatives[option]) errors.push("missing_option_" + option);
+  }
   if (answer && !alternatives[answer]) errors.push("answer_points_to_empty_option");
   if (!alternatives.E) warnings.push("empty_option_E");
+
   return {
-    external_id: text(question._id),
-    answer,
-    alternatives,
+    external_id: externalId,
+    question_type: "multipla_escolha",
     valid: errors.length === 0,
     errors,
     warnings,
-    parser: {
-      payload_keys: Object.keys(question).sort(),
-      alternatives_fields_used: fieldsUsed,
-      answer_field_used: fieldUsed,
-    },
     raw_payload: question,
   };
 }
@@ -218,13 +259,10 @@ Deno.serve(async (req) => {
       },
       items: validations.map((item, index) => ({
         item_index: index + 1,
-        external_id: item.external_id,
+        question_type: item.question_type,
         valid: item.valid,
-        answer: item.answer,
-        alternatives: item.alternatives,
         errors: item.errors,
         warnings: item.warnings,
-        parser: item.parser,
         raw_payload: item.raw_payload,
       })),
       resume_cursor: { page, next_page: firstTen.length === 10 ? page + 1 : null, size: 10, materia: materia ?? null },
