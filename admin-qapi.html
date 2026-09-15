@@ -28,8 +28,6 @@ body{margin:0;background:#0b0f14;color:#eef2f7;font:15px Arial,sans-serif}.wrap{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const U='https://ztqtcbzjesrkuaijmylm.supabase.co';
-const K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_Jd<script>
-const U='https://ztqtcbzjesrkuaijmylm.supabase.co';
 const K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
 const client=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
@@ -43,13 +41,14 @@ function writeLog(value,cls=''){
 }
 function errorDetail(error,data){
   if(data?.error)return data.error;
-  if(error?.context)return error.context;
   return error?.message||String(error||'Erro desconhecido');
 }
 
 async function init(){
-  const {data:{session},error:sessionError}=await client.auth.getSession();
-  if(sessionError||!session){
+  // Mesmo fluxo de validação administrativa usado anteriormente nesta página.
+  const r=await client.auth.getSession();
+  const session=r.data.session;
+  if(!session){
     $('auth').innerHTML='<span class="bad">Sessão não encontrada. Faça login como administrador.</span>';
     return;
   }
@@ -71,8 +70,9 @@ async function runDryRun(){
   $('status').textContent='Executando dry-run controlado…';
   writeLog('Executando qapi-bulk-import com mode=dry_run, size=10 e page=1…','warn');
   try{
-    const {data:{session},error:refreshError}=await client.auth.getSession();
-    if(refreshError||!session?.access_token)throw new Error('Sessão administrativa expirada. Faça login novamente.');
+    const r=await client.auth.getSession();
+    const session=r.data.session;
+    if(!session?.access_token)throw new Error('Sessão administrativa expirada. Faça login novamente.');
     adminSession=session;
     const result=await client.functions.invoke('qapi-bulk-import',{
       headers:{Authorization:'Bearer '+adminSession.access_token},
@@ -88,7 +88,10 @@ async function runDryRun(){
     button.disabled=false;
   }
 }
+
 init().catch(error=>{
   $('auth').innerHTML='<span class="bad">Falha ao inicializar: '+esc(error.message)+'</span>';
 });
 </script>
+</body>
+</html>
