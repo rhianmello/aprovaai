@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const QAPI_BASE = "https://qapi.otunac.com/api";
 const cors = {
@@ -22,6 +23,18 @@ function nonEmptyParams(input: Record<string, unknown>) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
+    const auth = req.headers.get("Authorization");
+    if (!auth?.startsWith("Bearer ")) return respond({ ok: false, error: "Não autenticado." }, 401);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceKey) return respond({ ok: false, error: "Configuração do servidor incompleta." }, 500);
+    const admin = createClient(supabaseUrl, serviceKey);
+    const token = auth.slice(7);
+    const userResult = await admin.auth.getUser(token);
+    if (userResult.error || !userResult.data.user) return respond({ ok: false, error: "Sessão inválida." }, 401);
+    const profile = await admin.from("profiles").select("role,active").eq("id", userResult.data.user.id).maybeSingle();
+    if (profile.error || profile.data?.role !== "admin" || profile.data?.active !== true) return respond({ ok: false, error: "Acesso administrativo necessário." }, 403);
+
     const url = new URL(req.url);
     const requestParams: Record<string, unknown> = Object.fromEntries(url.searchParams.entries());
     if (req.method === "POST") {
