@@ -110,7 +110,7 @@ jobs:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
 
-          # Remove as decorações dos cards de planos.
+          # Remove as decorações dos cards de planos and keep admin control consistent.
           p = root / 'visitor-tracker.js'
           if p.exists():
               text = p.read_text(encoding='utf-8')
@@ -118,6 +118,44 @@ jobs:
               new = re.sub(r'\.np-price-deco\{.*?\}\.np-price-deco\.left\{.*?\}\.np-price-deco\.right\{.*?\}\.np-price-deco\.top\{.*?\}\.np-price-deco \.np-deco-icon\{.*?\}\.np-price-deco \.np-deco-text\{.*?\}\.np-price-deco \.np-arrow\{.*?\}\.np-price-deco\.top \.np-deco-icon\{.*?\}\.np-price-deco\.top \.np-deco-text\{.*?\}', '', new, count=1, flags=re.S)
               new = new.replace('@media(max-width:1050px){#np-pricing .np-price-deco{display:none}}', '', 1)
               new = re.sub(r'<div class="np-price-deco top">.*?</div><div class="np-price-deco left">.*?</div><div class="np-price-deco right">.*?</div>', '', new, count=1, flags=re.S)
+
+              # Restore the administrator control globally. It is shown only after a real
+              # Supabase session is present and the server-side is_admin RPC returns true.
+              if 'function adminNav(' not in new:
+                  marker = 'function init(){'
+                  if marker not in new:
+                      raise SystemExit('visitor-tracker.js: init marker not found')
+                  fn = r'''async function adminNav(){
+try{
+ const sb=await getClient();
+ const {data:{session}}=await sb.auth.getSession();
+ const apply=async logged=>{
+   const old=document.getElementById('np-admin-gear');
+   if(old)old.remove();
+   if(!logged)return;
+   try{
+     const {data:admin,error}=await sb.rpc('is_admin');
+     if(error||admin!==true)return;
+     const host=document.querySelector('header .account')||document.querySelector('header')||document.querySelector('.nav-actions');
+     if(!host)return;
+     const a=document.createElement('a');
+     a.id='np-admin-gear';
+     a.href='admin.html';
+     a.title='Administração';
+     a.setAttribute('aria-label','Abrir administração');
+     a.textContent='⚙️ ADM';
+     a.style.cssText='display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 12px;border-radius:9px;border:1px solid #4a4120;background:#17140b;color:#f2d86b;text-decoration:none;font-weight:800;font-size:13px;white-space:nowrap;';
+     host.appendChild(a);
+   }catch(e){console.warn('[AdminNav]',e)}
+ };
+ await apply(!!session);
+ sb.auth.onAuthStateChange((_event,next)=>{apply(!!next)});
+}catch(e){console.warn('[AdminNav]',e)}
+}
+'''
+                  new = new.replace(marker, fn + marker, 1)
+                  new = new.replace('init();', 'init();adminNav();', 1)
+
               if new != text:
                   p.write_text(new, encoding='utf-8')
                   changed.append('visitor-tracker.js')
