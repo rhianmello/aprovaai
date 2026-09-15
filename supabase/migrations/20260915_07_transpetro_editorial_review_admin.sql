@@ -77,7 +77,7 @@ begin
         s.editorial_difficulty,
         s.classification_reason
       )) = 1 as decisions_consistent,
-      min(s.representative_id) as representative_id
+      min(s.representative_id::text)::uuid as representative_id
     from scoped s
     group by s.question_id
   )
