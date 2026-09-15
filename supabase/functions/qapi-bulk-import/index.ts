@@ -33,23 +33,119 @@ async function requireAdmin(req: Request) {
   }
 }
 
+function firstValue(question: QapiQuestion, keys: string[]) {
+  for (const key of keys) {
+    const value = question[key];
+    if (value !== undefined && value !== null && text(value) !== "") return { key, value };
+  }
+  return { key: null, value: null };
+}
+
+function optionLetter(value: unknown) {
+  const raw = text(value).toUpperCase();
+  const direct = raw.match(/^[A-E]$/)?.[0];
+  if (direct) return direct;
+  const described = raw.match(/(?:ALTERNATIVA|OPÇÃO|OPCAO)\s*[:.-]?\s*([A-E])/)?.[1];
+  if (described) return described;
+  const numeric = Number(raw);
+  if (Number.isInteger(numeric) && numeric >= 1 && numeric <= 5) return "ABCDE"[numeric - 1];
+  return "";
+}
+
+function optionText(value: unknown) {
+  if (typeof value === "string" || typeof value === "number") return text(value);
+  if (!value || typeof value !== "object") return "";
+  const row = value as Record<string, unknown>;
+  return text(row.texto ?? row.text ?? row.value ?? row.conteudo ?? row.descricao ?? row.resposta);
+}
+
+function extractAlternatives(question: QapiQuestion) {
+  const alternatives: Record<string, string> = { A: "", B: "", C: "", D: "", E: "" };
+  const fieldsUsed: string[] = [];
+  const containers = ["alternativas", "alternatives", "opcoes", "opções", "options", "respostas"];
+
+  for (const containerName of containers) {
+    const container = question[containerName];
+    if (Array.isArray(container)) {
+      fieldsUsed.push(containerName);
+      container.slice(0, 5).forEach((entry, index) => {
+        const row = entry && typeof entry === "object" ? entry as Record<string, unknown> : null;
+        const explicit = row ? optionLetter(row.letra ?? row.letter ?? row.label ?? row.opcao ?? row.opção ?? row.id) : "";
+        const letter = explicit || "ABCDE"[index];
+        const value = optionText(entry);
+        if (letter && value && !alternatives[letter]) alternatives[letter] = value;
+      });
+    } else if (container && typeof container === "object") {
+      fieldsUsed.push(containerName);
+      for (const [key, value] of Object.entries(container as Record<string, unknown>)) {
+        const letter = optionLetter(key);
+        const candidate = optionText(value);
+        if (letter && candidate && !alternatives[letter]) alternatives[letter] = candidate;
+      }
+    }
+  }
+
+  for (const letter of ["A", "B", "C", "D", "E"]) {
+    const aliases = [
+      "opcao" + letter, "opção" + letter, "opcao_" + letter.toLowerCase(),
+      "opção_" + letter.toLowerCase(), "alternativa" + letter,
+      "alternativa_" + letter.toLowerCase(), "option" + letter,
+      "option_" + letter.toLowerCase(), letter, letter.toLowerCase(),
+    ];
+    const found = firstValue(question, aliases);
+    const candidate = optionText(found.value);
+    if (candidate && !alternatives[letter]) {
+      alternatives[letter] = candidate;
+      if (found.key) fieldsUsed.push(found.key);
+    }
+  }
+  return { alternatives, fieldsUsed: [...new Set(fieldsUsed)] };
+}
+
+function extractAnswer(question: QapiQuestion, alternatives: Record<string, string>) {
+  const found = firstValue(question, [
+    "gabarito", "resposta", "answer", "correct_answer", "correctAnswer",
+    "alternativaCorreta", "alternativa_correta", "opcaoCorreta", "opcao_correta",
+  ]);
+  let answer = optionLetter(found.value);
+  if (!answer && found.value && typeof found.value === "object") {
+    const row = found.value as Record<string, unknown>;
+    answer = optionLetter(row.letra ?? row.letter ?? row.label ?? row.opcao ?? row.opção ?? row.id ?? row.index);
+  }
+  if (!answer) {
+    const rawText = optionText(found.value);
+    const match = Object.entries(alternatives).find(([, value]) => value && text(value) === rawText);
+    if (match) answer = match[0];
+  }
+  return { answer, fieldUsed: found.key };
+}
+
 function validateQuestion(question: QapiQuestion) {
-  const answer = text(question.gabarito).toUpperCase();
-  const alternatives: Record<string, string> = {
-    A: text(question.opcaoA), B: text(question.opcaoB), C: text(question.opcaoC),
-    D: text(question.opcaoD), E: text(question.opcaoE),
-  };
+  const { alternatives, fieldsUsed } = extractAlternatives(question);
+  const { answer, fieldUsed } = extractAnswer(question, alternatives);
   const errors: string[] = [];
   const warnings: string[] = [];
   if (!text(question._id)) errors.push("missing_external_id");
   if (!text(question.enunciado)) errors.push("missing_statement");
-  if (!["A", "B", "C", "D", "E"].includes(answer)) errors.push("invalid_answer");
+  if (!answer) errors.push("invalid_answer");
   for (const option of ["A", "B", "C", "D"]) if (!alternatives[option]) errors.push("missing_option_" + option);
   if (answer && !alternatives[answer]) errors.push("answer_points_to_empty_option");
   if (!alternatives.E) warnings.push("empty_option_E");
-  return { external_id: text(question._id), answer, alternatives, valid: errors.length === 0, errors, warnings };
+  return {
+    external_id: text(question._id),
+    answer,
+    alternatives,
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    parser: {
+      payload_keys: Object.keys(question).sort(),
+      alternatives_fields_used: fieldsUsed,
+      answer_field_used: fieldUsed,
+    },
+    raw_payload: question,
+  };
 }
-
 async function fetchTen(materia?: string, page = 1) {
   const key = Deno.env.get("QAPI_KEY");
   if (!key) throw new Error("QAPI_KEY não configurada");
@@ -121,8 +217,15 @@ Deno.serve(async (req) => {
         duplicate_external_ids_in_response: [...new Set(duplicateIds)].length,
       },
       items: validations.map((item, index) => ({
-        item_index: index + 1, external_id: item.external_id, valid: item.valid,
-        errors: item.errors, warnings: item.warnings,
+        item_index: index + 1,
+        external_id: item.external_id,
+        valid: item.valid,
+        answer: item.answer,
+        alternatives: item.alternatives,
+        errors: item.errors,
+        warnings: item.warnings,
+        parser: item.parser,
+        raw_payload: item.raw_payload,
       })),
       resume_cursor: { page, next_page: firstTen.length === 10 ? page + 1 : null, size: 10, materia: materia ?? null },
     });
