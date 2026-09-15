@@ -1,0 +1,46 @@
+name: Add QAPI button to admin
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  add-qapi-button:
+    if: ${{ !contains(github.event.head_commit.message, '[qapi-button]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add Banco de questões button
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('admin.html')
+          s = p.read_text(encoding='utf-8')
+          marker = 'admin-qapi.html'
+          if marker in s:
+              print('QAPI button already present.')
+              raise SystemExit(0)
+          old = '<button data-tab="sessionsTab">📱 Dispositivos</button>'
+          new = old + '<a href="admin-qapi.html" style="display:inline-flex;align-items:center;text-decoration:none;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:9px;padding:10px 14px;font-weight:700">📚 Banco de questões</a>'
+          if old not in s:
+              raise SystemExit('Menu de administração não encontrado; nenhuma alteração feita.')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          print('QAPI button added.')
+
+      - name: Commit change and remove one-shot workflow
+        shell: bash
+        run: |
+          if git diff --quiet -- admin.html; then
+            echo 'No change needed.'
+            exit 0
+          fi
+          rm -f .github/workflows/add-qapi-admin-button.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin.html .github/workflows/add-qapi-admin-button.yml
+          git commit -m 'Adicionar Banco de questões ao ADM [qapi-button]'
+          git push
