@@ -356,166 +356,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    const startedAt = new Date().toISOString();
-    const { data: batch, error: batchError } = await db.from("question_import_batches").insert({
-      batch_name: `qapi_import_${startedAt}`,
-      preparation_slug: preparationSlug,
-      mode: "import", status: "running", total_items: validations.length,
-      requested_by: admin.id, source: "QAPI", target_per_discipline: size,
-      requested: size, found: validations.length, valid: summary.valid,
-      imported: 0, reused: summary.reused, duplicates: summary.duplicates,
-      rejected: summary.rejected, needs_review: 0, pages_consulted: 1,
-      errors: [], log: [{ at: startedAt, event: "controlled_import_started" }],
-      started_at: startedAt, dry_run: false,
-      resume_cursor: { page, next_page: controlledRows.length === size ? page + 1 : null, size, materia: materia ?? null },
-      config: { parser_version: PARSER_VERSION, maximum_items: MAX_ITEMS, page, size, materia: materia ?? null },
-    }).select("id").single();
-    if (batchError || !batch) throw batchError ?? new Error("Falha ao criar batch.");
-
-    const importedAt = new Date().toISOString();
-    let imported = 0;
-    const itemResults: Record<string, unknown>[] = [];
-    for (let index = 0; index < validations.length; index++) {
-      const item = validations[index];
-      const decision = decisions[index];
-      let questionId: string | null = decision.duplicateOf;
-      let status = decision.status;
-      let action = decision.action;
-      let message: string | null = decision.duplicateIndex ? `Duplicado do item ${decision.duplicateIndex}.` : null;
-      const normalized = item.normalized;
-
-      if (decision.kind === "import") {
-        const { data: insertedQuestion, error: questionError } = await db.from("questions").insert({
-          statement: normalized.statement,
-          alternatives: normalized.alternatives,
-          answer: normalized.answer,
-          explanation: normalized.explanation,
-          source_type: "QAPI",
-          source_reference: item.external_id,
-          year: normalized.year,
-          is_original: false,
-          active: true,
-        }).select("id").single();
-        if (questionError || !insertedQuestion) {
-          status = "error";
-          action = "insert_failed";
-          message = questionError?.message ?? "Falha ao inserir questão.";
-        } else {
-          questionId = insertedQuestion.id;
-          const { error: metadataError } = await db.from("question_editorial_metadata").insert({
-            question_id: questionId,
-            external_id: item.external_id,
-            discipline: normalized.materia,
-            topic: normalized.assunto,
-            question_type: item.question_type,
-            editorial_status: "approved",
-            source_year: normalized.year,
-            source_banca: normalized.banca,
-            source_orgao: normalized.orgao,
-            source_cargo: normalized.cargo,
-            source_materia: normalized.materia,
-            source_exam: normalized.exam,
-            source_text_code: normalized.textCode,
-            source: "QAPI",
-            source_assunto: normalized.assunto,
-            source_url: `${QAPI_BASE}/questoes/${encodeURIComponent(item.external_id)}`,
-            source_title: null,
-            source_accessed_at: importedAt,
-            source_payload: item.raw_payload,
-            source_metadata: { page, size, parser_version: PARSER_VERSION },
-            display_banca: normalized.banca,
-            display_orgao: normalized.orgao,
-            display_cargo: normalized.cargo,
-            display_materia: normalized.materia,
-            display_assunto: normalized.assunto,
-            import_batch_id: batch.id,
-            imported_at: importedAt,
-            validation_status: "validated",
-            validation_errors: [],
-            quality_score: 100,
-            normalized_statement_hash: item.normalized_statement_hash,
-            normalized_full_hash: item.normalized_full_hash,
-            normalized_alternatives: item.normalized_alternatives,
-            generation_method: "qapi_import",
-            editorial_notes: `Importação controlada; parser ${PARSER_VERSION}.`,
-          });
-          if (metadataError) {
-            status = "error";
-            action = "metadata_failed";
-            message = metadataError.message;
-          } else {
-            status = "imported";
-            action = "inserted";
-            imported++;
-          }
-        }
-      }
-
-      const { error: itemError } = await db.from("question_import_items").insert({
-        batch_id: batch.id,
-        item_index: index + 1,
-        external_id: item.external_id || null,
-        question_id: questionId,
-        status,
-        message,
-        source: "QAPI",
-        source_reference: item.external_id || null,
-        source_page: page,
-        discipline: normalized.materia,
-        subject: normalized.assunto,
-        action,
-        validation_status: item.valid ? "validated" : "rejected",
-        validation_errors: item.errors,
-        quality_score: item.valid ? 100 : 0,
-        duplicate_of_question_id: decision.kind === "duplicate" ? questionId : null,
-        duplicate_score: decision.kind === "duplicate" ? 1 : null,
-        raw_payload: item.raw_payload,
-        normalized_payload: {
-          statement: normalized.statement,
-          alternatives: normalized.alternatives,
-          answer: normalized.answer,
-          question_type: item.question_type,
-          normalized_statement_hash: item.normalized_statement_hash,
-          normalized_full_hash: item.normalized_full_hash,
-        },
-        imported_at: status === "imported" ? importedAt : null,
-      });
-      if (itemError) throw itemError;
-      itemResults.push({ item_index: index + 1, external_id: item.external_id, status, action, question_id: questionId, errors: item.errors, warnings: item.warnings });
-    }
-
-    const errorItems = itemResults.filter((item) => item.status === "error").length;
-    const skippedItems = validations.length - imported - errorItems;
-    const finishedAt = new Date().toISOString();
-    const finalStatus = errorItems > 0 ? "failed" : "imported";
-    const { error: finishError } = await db.from("question_import_batches").update({
-      status: finalStatus,
-      imported_items: imported,
-      skipped_items: skippedItems,
-      error_items: errorItems,
-      imported,
-      errors: itemResults.filter((item) => item.status === "error").map((item) => ({ item_index: item.item_index, action: item.action })),
-      log: [
-        { at: startedAt, event: "controlled_import_started" },
-        { at: finishedAt, event: "controlled_import_finished", imported, skipped: skippedItems, errors: errorItems },
-      ],
-      finished_at: finishedAt,
-    }).eq("id", batch.id);
-    if (finishError) throw finishError;
-
-    return respond({
-      ok: errorItems === 0,
-      mode: "import",
-      maximum_items: MAX_ITEMS,
-      batch_id: batch.id,
-      requested_size: size,
-      received_size: controlledRows.length,
-      page,
-      materia: materia ?? null,
-      summary: { ...summary, imported, skipped: skippedItems, errors: errorItems },
-      items: itemResults,
-      resume_cursor: { page, next_page: controlledRows.length === size ? page + 1 : null, size, materia: materia ?? null },
-    }, errorItems > 0 ? 207 : 200);
+    const { data: importResult, error: importError } = await db.rpc("import_qapi_controlled_batch", {
+      p_requested_by: admin.id,
+      p_page: page,
+      p_size: size,
+      p_materia: materia ?? null,
+      p_preparation_slug: preparationSlug,
+      p_parser_version: PARSER_VERSION,
+      p_items: validations,
+    });
+    if (importError) throw importError;
+    return respond(importResult);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const status = message === "unauthorized" ? 401 : message === "forbidden" ? 403 : 500;
