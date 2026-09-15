@@ -11,16 +11,25 @@ body{margin:0;background:#0b0f14;color:#eef2f7;font:15px Arial,sans-serif}.wrap{
 <body>
 <div class="wrap">
   <div class="card">
-    <h1>Controle QAPI</h1>
-    <div class="muted">Execute o dry-run ou, após confirmação explícita, o primeiro lote real controlado de até 10 questões.</div>
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <h1>Controle QAPI</h1>
+        <div class="muted">Execute o dry-run ou, após confirmação explícita, o primeiro lote real controlado de até 10 questões.</div>
+      </div>
+      <button id="backAdmin" class="secondary" type="button">← Voltar para o Admin</button>
+    </div>
     <div id="auth" class="muted" style="margin-top:12px">Validando sessão…</div>
   </div>
   <div class="card">
     <h2>Execução controlada</h2>
-    <div class="muted">O dry-run não escreve dados. A importação real envia uma única requisição com <code>mode: "import"</code>, <code>size: 10</code> e <code>page: 1</code>. O filtro de matéria é opcional.</div>
+    <div class="muted">O dry-run não escreve dados. A importação real envia uma única requisição com <code>mode: "import"</code>, <code>size: 10</code> e a página informada abaixo. O filtro de matéria é opcional.</div>
     <div style="margin-top:16px">
       <label for="materia">Matéria</label>
       <input id="materia" type="text" maxlength="120" placeholder="Ex.: Português" autocomplete="off" disabled>
+    </div>
+    <div style="margin-top:16px">
+      <label for="page">Página</label>
+      <input id="page" type="number" min="1" step="1" value="1" inputmode="numeric" disabled>
     </div>
     <div class="row" style="margin-top:16px">
       <button id="dryRun" disabled>Testar dry-run — 10 questões</button>
@@ -50,8 +59,16 @@ function errorDetail(error,data){
   return error?.message||String(error||'Erro desconhecido');
 }
 function selectedMateria(){return $('materia').value.trim();}
+function selectedPage(){
+  const raw=$('page').value.trim();
+  const page=Number(raw);
+  if(!Number.isInteger(page)||page<1){
+    throw new Error('Página inválida. Informe um número inteiro maior ou igual a 1.');
+  }
+  return page;
+}
 function requestBody(mode){
-  const body={mode,size:10,page:1};
+  const body={mode,size:10,page:selectedPage()};
   const materia=selectedMateria();
   if(materia)body.materia=materia;
   return body;
@@ -60,7 +77,10 @@ function setExecutionDisabled(disabled){
   $('dryRun').disabled=disabled;
   $('realImport').disabled=disabled;
   $('materia').disabled=disabled;
+  $('page').disabled=disabled;
 }
+
+$('backAdmin').onclick=()=>{window.location.href='admin.html';};
 
 async function init(){
   // Mesmo fluxo de validação administrativa usado anteriormente nesta página.
@@ -84,7 +104,15 @@ async function init(){
 }
 
 async function runDryRun(){
-  const body=requestBody('dry_run');
+  let body;
+  try{
+    body=requestBody('dry_run');
+  }catch(error){
+    $('status').textContent=error.message;
+    writeLog({ok:false,error:error.message},'bad');
+    $('page').focus();
+    return;
+  }
   setExecutionDisabled(true);
   $('status').textContent='Executando dry-run controlado…';
   writeLog({request:'qapi-bulk-import',...body},'warn');
@@ -109,10 +137,18 @@ async function runDryRun(){
 }
 
 async function runRealImport(){
-  const body=requestBody('import');
+  let body;
+  try{
+    body=requestBody('import');
+  }catch(error){
+    $('status').textContent=error.message;
+    writeLog({ok:false,error:error.message},'bad');
+    $('page').focus();
+    return;
+  }
   const materiaLabel=body.materia?' da matéria "'+body.materia+'"':' sem filtro de matéria';
   const confirmed=window.confirm(
-    'ATENÇÃO: esta ação executará uma importação REAL controlada de até 10 questões'+materiaLabel+' (página 1). Deseja continuar?'
+    'ATENÇÃO: esta ação executará uma importação REAL controlada de até 10 questões'+materiaLabel+' (página '+body.page+'). Deseja continuar?'
   );
   if(!confirmed){
     $('status').textContent='Importação real cancelada. Nenhuma requisição foi enviada.';
