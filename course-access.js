@@ -42,8 +42,8 @@ if(!slug){page('Curso não configurado.','Identificador do curso inválido.');re
    console.warn('[course-access] usando configuração legada para',course.slug,configError);
  }
  window.__NP_AUTH_USER=session.user;window.__NP_COURSE=course;
- const bal=document.createElement('script');bal.src='./question-balance-runtime.js?v=20260914-1';
- bal.onload=()=>{const s=document.createElement('script');s.src='./study-dashboard-stable-v2.js?v=20260914-1';document.body.appendChild(s);s.onerror=()=>page('Não foi possível abrir a área de estudos.','O painel não carregou. Tente atualizar a página novamente.')};
+ const bal=document.createElement('script');bal.src='./question-balance-runtime.js?v=20260915-2';
+ bal.onload=()=>{const s=document.createElement('script');s.src='./study-dashboard-stable-v2.js?v=20260915-2';document.body.appendChild(s);s.onerror=()=>page('Não foi possível abrir a área de estudos.','O painel não carregou. Tente atualizar a página novamente.')};
  bal.onerror=()=>page('Não foi possível preparar o banco de questões.','O componente de balanceamento não carregou. Atualize a página e tente novamente.');
  document.body.appendChild(bal);
 }catch(e){console.error('course-access',e);page('Não foi possível abrir sua plataforma.',e.message==='timeout'?'O serviço demorou para responder.':(e.message||'Erro ao validar o acesso.'))}})();
