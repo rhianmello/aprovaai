@@ -57,10 +57,11 @@ function selectedRange(){
   if(total>30)throw new Error('O limite de segurança é de no máximo 30 páginas por execução.');
   return {start,end,total};
 }
-function requestBody(mode,page){
+function requestBody(mode,page,dryRunState=null){
   const body={mode,size:10,page};
   const materia=selectedMateria();
   if(materia)body.materia=materia;
+  if(mode==='dry_run'&&dryRunState)body.dry_run_state=dryRunState;
   return body;
 }
 function setExecutionDisabled(disabled){
@@ -76,7 +77,7 @@ function setProgress(current,total,page,end,accumulated){
   $('progressBar').style.width=percent+'%';
   $('progressText').textContent=current
     ? 'Página '+page+' de '+end+' ('+current+' de '+total+') — imported: '+accumulated.imported+
-      ', reused: '+accumulated.reused+', skipped: '+accumulated.skipped+', errors: '+accumulated.errors+'.'
+      ', reused: '+accumulated.reused+', skipped: '+accumulated.skipped+', duplicates: '+accumulated.duplicates+', errors: '+accumulated.errors+'.'
     : 'Sem execução em andamento.';
 }
 function appendLog(value,cls=''){
@@ -101,26 +102,22 @@ async function invokeQapi(body){
 }
 function pageCounters(data,mode){
   const summary=data?.summary||{};
-  if(mode==='dry_run'){
-    return {
-      imported:0,
-      reused:Number(summary.reused||0),
-      skipped:Number(summary.duplicates||0)+Number(summary.rejected||0),
-      errors:Number(summary.invalid||0),
-      potentially_new:Number(summary.importable||0)
-    };
-  }
+  const duplicates=Number(summary.duplicates??data?.duplicates??0);
+  const rejected=Number(summary.rejected??data?.rejected??0);
   return {
-    imported:Number(summary.imported??data?.imported??0),
+    imported:mode==='dry_run'?0:Number(summary.imported??data?.imported??0),
     reused:Number(summary.reused??data?.reused??0),
-    skipped:Number(summary.skipped??data?.skipped??0)+Number(summary.duplicates??0)+Number(summary.rejected??0),
-    errors:Number(summary.errors??data?.errors??0)
+    skipped:Number(summary.skipped??data?.skipped??(duplicates+rejected)),
+    duplicates,
+    errors:Number(summary.errors??data?.errors??(mode==='dry_run'?summary.invalid??0:0)),
+    potentially_new:mode==='dry_run'?Number(summary.importable??0):0
   };
 }
 function addCounters(accumulated,page){
   accumulated.imported+=page.imported;
   accumulated.reused+=page.reused;
   accumulated.skipped+=page.skipped;
+  accumulated.duplicates+=page.duplicates;
   accumulated.errors+=page.errors;
   accumulated.potentially_new+=(page.potentially_new||0);
 }
@@ -180,18 +177,20 @@ async function runRange(mode){
       return;
     }
   }
-  const accumulated={imported:0,reused:0,skipped:0,errors:0,potentially_new:0};
+  const accumulated={imported:0,reused:0,skipped:0,duplicates:0,errors:0,potentially_new:0};
+  let dryRunState=null;
   setExecutionDisabled(true);
   writeLog({request:'qapi-bulk-import',mode,start_page:range.start,end_page:range.end,size_per_call:10,materia:materia||null},'warn');
   try{
     for(let page=range.start,current=1;page<=range.end;page+=1,current+=1){
       setProgress(current-1,range.total,page,range.end,accumulated);
       $('status').textContent='Processando página '+page+' de '+range.end+'…';
-      const body=requestBody(mode,page);
+      const body=requestBody(mode,page,dryRunState);
       const result=await invokeQapi(body);
       if(result.error)throw new Error('Página '+page+' falhou: '+errorDetail(result.error,result.data));
       const counters=pageCounters(result.data,mode);
       addCounters(accumulated,counters);
+      if(mode==='dry_run')dryRunState=result.data?.dry_run_state||null;
       setProgress(current,range.total,page,range.end,accumulated);
       appendLog({page,mode,summary:result.data?.summary||null,counters},result.data?.ok?'ok':'bad');
       if(!result.data?.ok)throw new Error('Página '+page+' falhou: resposta sem confirmação de sucesso.');
