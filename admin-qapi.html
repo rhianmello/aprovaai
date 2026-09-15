@@ -85,7 +85,6 @@ function appendLog(value,cls=''){
   el.innerHTML+=(el.textContent?'\n\n':'')+'<span class="'+cls+'">'+esc(textValue)+'</span>';
   el.scrollTop=el.scrollHeight;
 }
-function errorDetail(error,data){if(data?.error)return data.error;return error?.message||String(error||'Erro desconhecido');}
 $('backAdmin').onclick=()=>{window.location.href='admin.html';};
 async function currentAdminSession(){
   const r=await client.auth.getSession();
