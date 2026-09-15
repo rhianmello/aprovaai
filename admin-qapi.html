@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin — Carga QAPI | Nós Passa</title>
+<title>Admin — Teste dry-run QAPI | Nós Passa</title>
 <style>
 body{margin:0;background:#0b0f14;color:#eef2f7;font:15px Arial,sans-serif}.wrap{max-width:980px;margin:0 auto;padding:28px 18px}.card{background:#121820;border:1px solid #26313d;border-radius:16px;padding:20px;margin-bottom:16px}h1{margin:0 0 8px}.muted{color:#9aa6b2}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button{border:0;border-radius:10px;padding:12px 16px;font-weight:800;cursor:pointer;background:#e4c64a;color:#111}button.secondary{background:#26313d;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}.progress{height:10px;background:#202a34;border-radius:999px;overflow:hidden;margin:14px 0}.bar{height:100%;width:0;background:#e4c64a;transition:.2s}.log{white-space:pre-wrap;background:#080b0f;border-radius:12px;padding:14px;min-height:180px;max-height:500px;overflow:auto;color:#cdd6df;font:13px ui-monospace,SFMono-Regular,Menlo,monospace}.ok{color:#7ee2a8}.bad{color:#ff8f8f}.warn{color:#f4d06f}.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#1c2732;margin:3px;font-size:12px}
 </style>
@@ -11,59 +11,84 @@ body{margin:0;background:#0b0f14;color:#eef2f7;font:15px Arial,sans-serif}.wrap{
 <body>
 <div class="wrap">
   <div class="card">
-    <h1>Carga QAPI — Banco Massivo</h1>
-    <div class="muted">Busca até 300 questões por disciplina, sem restringir por banca. A separação por banca, ano, órgão, cargo e assunto fica registrada para classificação posterior.</div>
+    <h1>Teste dry-run QAPI</h1>
+    <div class="muted">Consulta e valida exatamente 10 questões da QAPI, sem inserir, atualizar ou excluir dados.</div>
     <div id="auth" class="muted" style="margin-top:12px">Validando sessão…</div>
   </div>
   <div class="card">
-    <h2>Disciplinas encontradas</h2>
-    <div id="subjects"><span class="muted">Carregando…</span></div>
+    <h2>Execução controlada</h2>
+    <div class="muted">A função recebe <code>mode: "dry_run"</code>, <code>size: 10</code> e <code>page: 1</code>. Não há botão de importação real.</div>
     <div class="row" style="margin-top:16px">
-      <button id="start" disabled>▶ Iniciar carga de até 300 por disciplina</button>
-      <button id="stop" class="secondary" disabled>Parar após a disciplina atual</button>
+      <button id="dryRun" disabled>Testar dry-run — 10 questões</button>
     </div>
-    <div class="progress"><div id="bar" class="bar"></div></div>
-    <div id="status" class="muted">Aguardando.</div>
+    <div id="status" class="muted" style="margin-top:12px">Aguardando sessão administrativa.</div>
   </div>
   <div class="card"><h2>Log</h2><div id="log" class="log">Aguardando início…</div></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const U='https://ztqtcbzjesrkuaijmylm.supabase.co';
+const K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_Jd<script>
+const U='https://ztqtcbzjesrkuaijmylm.supabase.co';
 const K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
 const client=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $=id=>document.getElementById(id);let subjects=[];let stop=false;
-function esc(v){return String(v??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}
-function log(s,cls=''){const el=$('log');el.innerHTML+=(el.textContent?'\n':'')+`<span class="${cls}">${esc(s)}</span>`;el.scrollTop=el.scrollHeight}
-function labelSubject(s){return s+' → QAPI: busca ampla por assuntos relacionados';}
+const $=id=>document.getElementById(id);
+let adminSession=null;
+
+function esc(v){return String(v??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+function writeLog(value,cls=''){
+  const el=$('log');
+  el.innerHTML='<span class="'+cls+'">'+esc(typeof value==='string'?value:JSON.stringify(value,null,2))+'</span>';
+  el.scrollTop=el.scrollHeight;
+}
+function errorDetail(error,data){
+  if(data?.error)return data.error;
+  if(error?.context)return error.context;
+  return error?.message||String(error||'Erro desconhecido');
+}
+
 async function init(){
- const r=await client.auth.getSession(),session=r.data.session;
- if(!session){$('auth').innerHTML='<span class="bad">Sessão não encontrada. Faça login como administrador.</span>';return;}
- const p=await client.from('profiles').select('role,active,nome,email').eq('id',session.user.id).maybeSingle();
- if(p.error||!p.data||p.data.active===false||!['admin','super_admin'].includes(String(p.data.role||'').toLowerCase())){$('auth').innerHTML='<span class="bad">Acesso negado: esta página exige perfil administrador.</span>';return;}
- $('auth').innerHTML='<span class="ok">Administrador autenticado: '+esc(p.data.nome||p.data.email||session.user.email)+'</span>';
- const r2=await client.from('academic_content_items').select('subject_id,academic_subjects!inner(id,name)').eq('active',true);
- if(r2.error){$('subjects').innerHTML='<span class="bad">Erro: '+esc(r2.error.message)+'</span>';return;}
- const map=new Map();for(const x of r2.data||[]){const s=x.academic_subjects;if(s?.id&&!map.has(s.id))map.set(s.id,s.name)}
- subjects=[...map.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'));
- $('subjects').innerHTML=subjects.map(s=>`<span class="pill">${esc(labelSubject(s))}</span>`).join('')||'<span class="warn">Nenhuma disciplina com conteúdo ativo.</span>';
- $('start').disabled=!subjects.length;$('start').onclick=run;$('stop').onclick=()=>{stop=true;$('stop').disabled=true;$('status').textContent='Parada solicitada; concluindo a disciplina atual…'};
+  const {data:{session},error:sessionError}=await client.auth.getSession();
+  if(sessionError||!session){
+    $('auth').innerHTML='<span class="bad">Sessão não encontrada. Faça login como administrador.</span>';
+    return;
+  }
+  const p=await client.from('profiles').select('role,active,nome,email').eq('id',session.user.id).maybeSingle();
+  if(p.error||!p.data||p.data.active===false||!['admin','super_admin'].includes(String(p.data.role||'').toLowerCase())){
+    $('auth').innerHTML='<span class="bad">Acesso negado: esta página exige perfil administrador.</span>';
+    return;
+  }
+  adminSession=session;
+  $('auth').innerHTML='<span class="ok">Administrador autenticado: '+esc(p.data.nome||p.data.email||session.user.email)+'</span>';
+  $('status').textContent='Pronto para executar o dry-run.';
+  $('dryRun').disabled=false;
+  $('dryRun').onclick=runDryRun;
 }
-async function run(){
- stop=false;$('start').disabled=true;$('stop').disabled=false;$('log').textContent='';
- for(let i=0;i<subjects.length;i++){
-  if(stop)break;const s=subjects[i];$('status').textContent=`${i+1}/${subjects.length} — ${s}`;$('bar').style.width=((i/subjects.length)*100)+'%';log(`\n[${i+1}/${subjects.length}] ${s}`,'warn');
+
+async function runDryRun(){
+  const button=$('dryRun');
+  button.disabled=true;
+  $('status').textContent='Executando dry-run controlado…';
+  writeLog('Executando qapi-bulk-import com mode=dry_run, size=10 e page=1…','warn');
   try{
-   const r=await client.functions.invoke('qapi-bulk-import',{body:{subject_name:s,limit:300}});
-   if(r.error){let detail=r.error.message||String(r.error);if(r.data?.error)detail+=' — '+r.data.error;throw new Error(detail)}
-   const data=r.data;if(!data?.ok)throw new Error(data?.error||'Falha desconhecida');
-   log(`QAPI: ${data.qapi_found} | novas: ${data.imported} | já existentes: ${data.reused} | vínculos novos: ${data.links} | erros: ${data.errors}`,'ok');
-   if(data.materias_consultadas?.length)log(`Matérias QAPI consultadas: ${data.materias_consultadas.join(' | ')}`,'muted');
-  }catch(e){log(`ERRO: ${e.message||e}`,'bad')}
- }
- $('bar').style.width=(stop?'0':'100%');$('stop').disabled=true;$('start').disabled=false;$('status').textContent=stop?'Carga interrompida pelo administrador.':'Carga concluída. Valide os números no banco antes de liberar tudo aos alunos.';log(stop?'\nCarga interrompida.':'\n=== CARGA CONCLUÍDA ===','ok');
+    const {data:{session},error:refreshError}=await client.auth.getSession();
+    if(refreshError||!session?.access_token)throw new Error('Sessão administrativa expirada. Faça login novamente.');
+    adminSession=session;
+    const result=await client.functions.invoke('qapi-bulk-import',{
+      headers:{Authorization:'Bearer '+adminSession.access_token},
+      body:{mode:'dry_run',size:10,page:1}
+    });
+    if(result.error)throw new Error(errorDetail(result.error,result.data));
+    writeLog(result.data,'ok');
+    $('status').textContent=result.data?.ok?'Dry-run concluído sem escrita no banco.':'Dry-run retornou falha.';
+  }catch(error){
+    writeLog({ok:false,error:error?.message||String(error)},'bad');
+    $('status').textContent='Falha no dry-run. Veja o Log.';
+  }finally{
+    button.disabled=false;
+  }
 }
-init().catch(e=>{$('auth').innerHTML='<span class="bad">Falha ao inicializar: '+esc(e.message)+'</span>'});
+init().catch(error=>{
+  $('auth').innerHTML='<span class="bad">Falha ao inicializar: '+esc(error.message)+'</span>';
+});
 </script>
-</body>
-</html>
