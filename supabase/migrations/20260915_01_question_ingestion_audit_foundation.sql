@@ -43,20 +43,32 @@ alter table public.question_editorial_metadata
   add column if not exists generation_method text,
   add column if not exists editorial_notes text;
 
-alter table public.question_editorial_metadata
-  add constraint if not exists question_editorial_metadata_import_batch_fkey
-  foreign key (import_batch_id)
-  references public.question_import_batches(id)
-  on delete set null;
-
-alter table public.question_editorial_metadata
-  add constraint if not exists question_editorial_metadata_duplicate_question_fkey
-  foreign key (duplicate_of_question_id)
-  references public.questions(id)
-  on delete set null;
-
 do $$
 begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.question_editorial_metadata'::regclass
+      and conname = 'question_editorial_metadata_import_batch_fkey'
+  ) then
+    alter table public.question_editorial_metadata
+      add constraint question_editorial_metadata_import_batch_fkey
+      foreign key (import_batch_id)
+      references public.question_import_batches(id)
+      on delete set null;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.question_editorial_metadata'::regclass
+      and conname = 'question_editorial_metadata_duplicate_question_fkey'
+  ) then
+    alter table public.question_editorial_metadata
+      add constraint question_editorial_metadata_duplicate_question_fkey
+      foreign key (duplicate_of_question_id)
+      references public.questions(id)
+      on delete set null;
+  end if;
+
   if not exists (
     select 1 from pg_constraint
     where conrelid = 'public.question_editorial_metadata'::regclass
@@ -139,11 +151,20 @@ alter table public.question_import_items
   add column if not exists normalized_payload jsonb,
   add column if not exists imported_at timestamptz;
 
-alter table public.question_import_items
-  add constraint if not exists question_import_items_duplicate_question_fkey
-  foreign key (duplicate_of_question_id)
-  references public.questions(id)
-  on delete set null;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.question_import_items'::regclass
+      and conname = 'question_import_items_duplicate_question_fkey'
+  ) then
+    alter table public.question_import_items
+      add constraint question_import_items_duplicate_question_fkey
+      foreign key (duplicate_of_question_id)
+      references public.questions(id)
+      on delete set null;
+  end if;
+end $$;
 
 alter table public.question_import_items
   drop constraint if exists question_import_items_status_check;
