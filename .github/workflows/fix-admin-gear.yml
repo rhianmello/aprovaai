@@ -7,6 +7,8 @@ on:
 permissions:
   contents: write
 
+# One-shot repair: restore the admin control in the shared visitor runtime.
+
 jobs:
   fix:
     runs-on: ubuntu-latest
