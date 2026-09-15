@@ -183,6 +183,16 @@ begin
     raise exception 'Observação/motivo é obrigatório';
   end if;
 
+  perform r.id
+  from public.question_preparation_editorial_reviews r
+  join public.preparations p on p.id = r.preparation_id
+  join public.academic_editions ae on ae.id = p.edition_id
+  join public.question_editorial_metadata m on m.question_id = r.question_id
+  where r.question_id = p_question_id
+    and ae.official_name = 'TRANSPETRO/PSP/TERRA/NÍVEL MÉDIO/2026.3'
+    and coalesce(m.source_materia, m.display_materia) = 'Língua Portuguesa'
+  for update of r;
+
   select
     count(*)::integer,
     count(*) filter (where r.classification_method = 'manual')::integer
@@ -193,8 +203,7 @@ begin
   join public.question_editorial_metadata m on m.question_id = r.question_id
   where r.question_id = p_question_id
     and ae.official_name = 'TRANSPETRO/PSP/TERRA/NÍVEL MÉDIO/2026.3'
-    and coalesce(m.source_materia, m.display_materia) = 'Língua Portuguesa'
-  for update of r;
+    and coalesce(m.source_materia, m.display_materia) = 'Língua Portuguesa';
 
   if v_target_count <> 18 then
     raise exception 'Esperados 18 registros de revisão; encontrados %', v_target_count;
