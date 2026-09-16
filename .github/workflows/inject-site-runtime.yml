@@ -22,6 +22,7 @@ jobs:
           changed = []
           tracker = 'visitor-tracker.js'
           test_ui = 'simulados-gratis-ui.js'
+          admin_bridge = 'admin-v3-bridge.js'
           supabase_tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>'
 
           # Keep the custom domain as the single public canonical host.
@@ -66,6 +67,16 @@ jobs:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
 
+          # admin-v3 is the canonical administrator panel. Keep legacy links compatible.
+          for p in root.rglob('*.html'):
+              if '.git' in p.parts:
+                  continue
+              text = p.read_text(encoding='utf-8')
+              new = text.replace('admin.html', 'admin-v3.html')
+              if new != text:
+                  p.write_text(new, encoding='utf-8')
+                  changed.append(p.as_posix())
+
           for p in root.rglob('*.html'):
               if '.git' in p.parts:
                   continue
@@ -98,6 +109,12 @@ jobs:
                       link = '<div id="admin-import-questions-link" style="margin:14px 0;padding:14px 16px;background:#11161c;border:1px solid #2a3440;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><strong style="font-size:15px">📝 Banco de questões</strong><div style="color:#99a4b0;font-size:12px;margin-top:4px">Importe lotes JSON com validação e dry-run.</div></div><a href="admin/importar-questoes.html" style="display:inline-block;padding:9px 13px;border-radius:9px;background:#e4c64a;color:#111;font-weight:900;text-decoration:none">Importar questões</a></div>'
                       new = new.replace(marker, link + marker, 1)
 
+                  rel_bridge = os.path.relpath(admin_bridge, p.parent).replace(os.sep, '/')
+                  bridge_tag = f'<script src="{rel_bridge}"></script>'
+                  new = re.sub(r'<script\s+src=["\'][^"\']*admin-v3-bridge\.js[^"\']*["\']\s*></script>', '', new, flags=re.I)
+                  low = new.lower(); i = low.rfind('</body>')
+                  if i >= 0: new = new[:i] + bridge_tag + new[i:]
+
               if new != text:
                   p.write_text(new, encoding='utf-8')
                   changed.append(p.as_posix())
@@ -119,6 +136,15 @@ jobs:
               new = new.replace('@media(max-width:1050px){#np-pricing .np-price-deco{display:none}}', '', 1)
               new = re.sub(r'<div class="np-price-deco top">.*?</div><div class="np-price-deco left">.*?</div><div class="np-price-deco right">.*?</div>', '', new, count=1, flags=re.S)
 
+              # Direct visits to the legacy panel must land on the canonical v3 panel.
+              redirect = "if(/admin\\.html$/i.test(location.pathname)){location.replace('admin-v3.html'+location.search+location.hash);return;}"
+              if redirect not in new:
+                  new = new.replace("'use strict';", "'use strict';\n" + redirect, 1)
+
+              # Clean up every stale duplicate gear, not only the first matching element.
+              new = new.replace("const old=document.getElementById('np-admin-gear');if(old)old.remove();", "document.querySelectorAll('#np-admin-gear').forEach(old=>old.remove());")
+              new = new.replace("a.href='admin.html';", "a.href='admin-v3.html';")
+
               # Restore the administrator control globally. It is shown only after a real
               # Supabase session is present and the server-side is_admin RPC returns true.
               if 'function adminNav(' not in new:
@@ -130,8 +156,7 @@ try{
  const sb=await getClient();
  const {data:{session}}=await sb.auth.getSession();
  const apply=async logged=>{
-   const old=document.getElementById('np-admin-gear');
-   if(old)old.remove();
+   document.querySelectorAll('#np-admin-gear').forEach(old=>old.remove());
    if(!logged)return;
    try{
      const {data:admin,error}=await sb.rpc('is_admin');
@@ -140,7 +165,7 @@ try{
      if(!host)return;
      const a=document.createElement('a');
      a.id='np-admin-gear';
-     a.href='admin.html';
+     a.href='admin-v3.html';
      a.title='Administração';
      a.setAttribute('aria-label','Abrir administração');
      a.textContent='⚙️ ADM';
