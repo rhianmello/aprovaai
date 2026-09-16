@@ -86,7 +86,7 @@ function appendLog(value,cls=''){
   el.innerHTML+=(el.textContent?'\n\n':'')+'<span class="'+cls+'">'+esc(textValue)+'</span>';
   el.scrollTop=el.scrollHeight;
 }
-$('backAdmin').onclick=()=>{window.location.href='admin.html';};
+$('backAdmin').onclick=()=>{window.location.href='admin-v3.html';};
 async function currentAdminSession(){
   const r=await client.auth.getSession();
   const session=r.data.session;

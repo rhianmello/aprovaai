@@ -78,5 +78,5 @@ async function logout(){await sb.auth.signOut({scope:'local'});sessionStorage.cl
 async function init(){try{const{data,error}=await sb.auth.getSession();if(error||!data.session)throw new Error('Sessão não encontrada. Faça login novamente.');$('email').textContent=data.session.user.email||'';const a=await sb.rpc('is_admin');if(a.error||a.data!==true)throw new Error('Sua conta não possui acesso administrativo.');await load();$('loading').remove();$('app').hidden=false;document.querySelectorAll('#nav button[data-section]').forEach(b=>b.onclick=()=>renderSection(b.dataset.section));$('topLogout').onclick=logout;$('sideLogout').onclick=logout;$('cancelStudent').onclick=closeStudentModal;$('saveStudent').onclick=saveStudent;$('cancelEnroll').onclick=closeEnrollModal;$('saveEnroll').onclick=saveEnrollment;renderSection('overview')}catch(e){$('loading').innerHTML=`<div class="box"><div class="error">🔒 ${esc(e.message||'Erro ao iniciar o painel.')}</div><p><a class="btn" href="login.html">Entrar novamente</a> <a class="btn secondary" href="concursos.html">Voltar</a></p></div>`}}
 init();
 </script>
-</body>
+<script src="admin-v3-bridge.js"></script></body>
 </html>
