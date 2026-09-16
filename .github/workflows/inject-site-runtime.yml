@@ -145,41 +145,10 @@ jobs:
               new = new.replace("const old=document.getElementById('np-admin-gear');if(old)old.remove();", "document.querySelectorAll('#np-admin-gear').forEach(old=>old.remove());")
               new = new.replace("a.href='admin.html';", "a.href='admin-v3.html';")
 
-              # Restore the administrator control globally. It is shown only after a real
-              # Supabase session is present and the server-side is_admin RPC returns true.
+              # The current runtime already owns adminNav. Fail loudly instead of silently
+              # re-injecting a second implementation that can create duplicate controls.
               if 'function adminNav(' not in new:
-                  marker = 'function init(){'
-                  if marker not in new:
-                      raise SystemExit('visitor-tracker.js: init marker not found')
-                  fn = r'''async function adminNav(){
-try{
- const sb=await getClient();
- const {data:{session}}=await sb.auth.getSession();
- const apply=async logged=>{
-   document.querySelectorAll('#np-admin-gear').forEach(old=>old.remove());
-   if(!logged)return;
-   try{
-     const {data:admin,error}=await sb.rpc('is_admin');
-     if(error||admin!==true)return;
-     const host=document.querySelector('header .account')||document.querySelector('header')||document.querySelector('.nav-actions');
-     if(!host)return;
-     const a=document.createElement('a');
-     a.id='np-admin-gear';
-     a.href='admin-v3.html';
-     a.title='Administração';
-     a.setAttribute('aria-label','Abrir administração');
-     a.textContent='⚙️ ADM';
-     a.style.cssText='display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 12px;border-radius:9px;border:1px solid #4a4120;background:#17140b;color:#f2d86b;text-decoration:none;font-weight:800;font-size:13px;white-space:nowrap;';
-     host.appendChild(a);
-   }catch(e){console.warn('[AdminNav]',e)}
- };
- await apply(!!session);
- sb.auth.onAuthStateChange((_event,next)=>{apply(!!next)});
-}catch(e){console.warn('[AdminNav]',e)}
-}
-'''
-                  new = new.replace(marker, fn + marker, 1)
-                  new = new.replace('init();', 'init();adminNav();', 1)
+                  raise SystemExit('visitor-tracker.js: adminNav function not found')
 
               if new != text:
                   p.write_text(new, encoding='utf-8')
