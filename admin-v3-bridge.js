@@ -37,6 +37,26 @@
     nav.appendChild(a);
   }
 
+  function loadScript(src, id){
+    if(window.NPTranspetroFill) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const existing = document.getElementById(id);
+      if(existing){
+        existing.addEventListener('load', resolve, {once:true});
+        existing.addEventListener('error', () => reject(new Error('Não foi possível carregar o módulo de preenchimento Transpetro.')), {once:true});
+        if(window.NPTranspetroFill) resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = id;
+      script.src = src;
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Não foi possível carregar o módulo de preenchimento Transpetro.'));
+      document.body.appendChild(script);
+    });
+  }
+
   async function renderDevices(button){
     document.querySelectorAll('#nav button[data-section]').forEach(b => b.classList.toggle('active', b === button));
     const eyebrow = document.getElementById('sectionEyebrow');
@@ -73,21 +93,54 @@
     }
   }
 
+  async function renderTranspetroFill(button){
+    document.querySelectorAll('#nav button[data-section]').forEach(b => b.classList.toggle('active', b === button));
+    const eyebrow = document.getElementById('sectionEyebrow');
+    const title = document.getElementById('sectionTitle');
+    const description = document.getElementById('sectionDescription');
+    const mount = document.getElementById('sectionMount');
+    if(eyebrow) eyebrow.textContent = 'TRANSPETRO QAPI';
+    if(title) title.textContent = 'Preencher questões Transpetro';
+    if(description) description.textContent = 'Carregando fila persistente de importação controlada.';
+    if(mount) mount.innerHTML = '<section class="section-card"><div class="empty">Carregando operação Transpetro...</div></section>';
+
+    try{
+      await loadScript('admin-transpetro-fill.js', 'np-admin-transpetro-fill-script');
+      if(!window.NPTranspetroFill?.render) throw new Error('Módulo de preenchimento Transpetro indisponível.');
+      await window.NPTranspetroFill.render(button);
+    }catch(error){
+      if(mount) mount.innerHTML = `<section class="section-card"><div class="error">${esc(error?.message || error)}</div></section>`;
+    }
+  }
+
   function install(){
     installStyles();
     const nav = document.getElementById('nav');
-    if(!nav || document.getElementById('np-admin-devices')) return;
+    if(!nav) return;
 
-    const devices = document.createElement('button');
-    devices.id = 'np-admin-devices';
-    devices.type = 'button';
-    devices.dataset.section = 'devices';
-    devices.innerHTML = '<span class="nav-icon">▣</span><span>Dispositivos</span>';
+    if(!document.getElementById('np-admin-devices')){
+      const devices = document.createElement('button');
+      devices.id = 'np-admin-devices';
+      devices.type = 'button';
+      devices.dataset.section = 'devices';
+      devices.innerHTML = '<span class="nav-icon">▣</span><span>Dispositivos</span>';
+      const questions = nav.querySelector('button[data-section="questions"]');
+      if(questions) nav.insertBefore(devices, questions);
+      else nav.appendChild(devices);
+      devices.addEventListener('click', () => renderDevices(devices));
+    }
 
-    const questions = nav.querySelector('button[data-section="questions"]');
-    if(questions) nav.insertBefore(devices, questions);
-    else nav.appendChild(devices);
-    devices.addEventListener('click', () => renderDevices(devices));
+    if(!document.getElementById('np-admin-transpetro-fill')){
+      const fill = document.createElement('button');
+      fill.id = 'np-admin-transpetro-fill';
+      fill.type = 'button';
+      fill.dataset.section = 'transpetro-fill';
+      fill.innerHTML = '<span class="nav-icon">▤</span><span>Preencher Transpetro</span>';
+      const questions = nav.querySelector('button[data-section="questions"]');
+      if(questions) nav.insertBefore(fill, questions);
+      else nav.appendChild(fill);
+      fill.addEventListener('click', () => renderTranspetroFill(fill));
+    }
 
     addExternalLink(nav, 'np-admin-editorial', 'admin-revisao-transpetro.html', '✓', 'Revisão Editorial Transpetro');
     addExternalLink(nav, 'np-admin-visitors', 'visitantes.html', '◉', 'Ver visitantes');
