@@ -137,6 +137,16 @@
     return result.data;
   }
 
+  async function getRun(runId){
+    if(!runId) return null;
+    const result = await sb().from('transpetro_question_fill_runs')
+      .select('*')
+      .eq('id', runId)
+      .maybeSingle();
+    if(result.error) throw result.error;
+    return result.data;
+  }
+
   async function loadTasks(runId){
     const result = await sb().from('transpetro_question_fill_queue')
       .select('*')
@@ -144,6 +154,10 @@
       .order('position', {ascending:true});
     if(result.error) throw result.error;
     return result.data || [];
+  }
+
+  function shouldRunDryRun(task){
+    return task.status === 'pending' || task.status === 'dry_run_running' || task.phase === 'idle' || task.phase === 'dry_run';
   }
 
   function countersFrom(data, mode){
@@ -270,8 +284,8 @@
   }
 
   async function incrementRun(runId, counters){
-    const run = await latestRun();
-    if(!run || run.id !== runId) return;
+    const run = await getRun(runId);
+    if(!run) return;
     await updateRun(runId, {
       pages_processed: Number(run.pages_processed || 0) + 1,
       found: Number(run.found || 0) + Number(counters.found || 0),
@@ -283,11 +297,24 @@
     });
   }
 
+  async function markActiveTaskFailed(runId, message){
+    const run = await getRun(runId);
+    if(run?.current_task_id){
+      const tasks = await loadTasks(runId);
+      const task = tasks.find(item => item.id === run.current_task_id);
+      await updateTask(run.current_task_id, {
+        status: 'failed',
+        last_error: message,
+        errors: Number(task?.errors || 0) + 1
+      });
+    }
+  }
+
   async function processTask(runId, task){
     let current = task;
     await updateRun(runId, {current_task_id: task.id});
 
-    if(current.status === 'pending' || current.phase === 'idle'){
+    if(shouldRunDryRun(current)){
       current = await updateTask(current.id, {
         status: 'dry_run_running',
         phase: 'dry_run',
@@ -395,7 +422,7 @@
           break;
         }
         await processTask(runState.id, next);
-        runState = await latestRun();
+        runState = await getRun(runState.id);
         await refresh();
       }
       if(pauseRequested){
@@ -404,8 +431,17 @@
       }
     }catch(error){
       const structural = Boolean(error.structural);
-      await updateRun(activeRunId, {status: 'failed', last_error: error.message || String(error), errors: Number((await latestRun())?.errors || 0) + 1});
-      setStatus(structural ? `Erro estrutural: ${error.message}` : `Erro registrado: ${error.message}`, 'bad');
+      const message = error.message || String(error);
+      if(activeRunId) await markActiveTaskFailed(activeRunId, message);
+      const failedRun = activeRunId ? await getRun(activeRunId) : null;
+      if(activeRunId){
+        await updateRun(activeRunId, {
+          status: 'failed',
+          last_error: message,
+          errors: Number(failedRun?.errors || 0) + 1
+        });
+      }
+      setStatus(structural ? `Erro estrutural: ${message}` : `Erro registrado: ${message}`, 'bad');
     }finally{
       running = false;
       setButtons();
