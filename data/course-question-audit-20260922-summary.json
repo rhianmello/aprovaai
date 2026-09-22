@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-09-22",
+  "active_courses_total": 63,
+  "supabase_academic_courses": 61,
+  "legacy_courses": 2,
+  "academic_rows": 925,
+  "academic_min_visible": 50,
+  "academic_below_50": 0,
+  "ace_unique_questions": 1036,
+  "ace_topic_rows": 34,
+  "inspector_unique_questions": 601,
+  "inspector_topic_rows": 122
+}
