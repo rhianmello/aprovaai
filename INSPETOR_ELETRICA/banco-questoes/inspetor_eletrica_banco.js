@@ -6,7 +6,7 @@
 (function(){
 const Q=[]; const add=(id,disc,assunto,sub,en,alts,gabarito,exp,fonte='Autorais AprovaAI — estilo PROMINP/Cesgranrio')=>Q.push({id,disciplina:disc,assunto,subassunto:sub,dificuldade:'media',enunciado:en,alternativas:{A:alts[0],B:alts[1],C:alts[2],D:alts[3],E:alts[4]},gabarito,explicacao:exp,tipo:'inedita',fonte});
 let n=1;
-const q=(d,a,s,e,o,g,x,f)=>add('IE-'+String(n++).padStart(3,'0'),d,a,s,e,o,g,x,f);
+const q=(d,a,s,detail,en,alts,g,x,f)=>add('IE-'+String(n++).padStart(3,'0'),d,a,detail?(`${s} — ${detail}`):s,en,alts,g,x,f);
 // ELETROTÉCNICA
 q('Elétrica','Eletrotécnica','Lei de Ohm','Resistência','Uma carga resistiva de 20 ohms é alimentada por 120 V. A corrente é:', ['2 A','4 A','6 A','8 A','10 A'],'C','Pela Lei de Ohm, I=V/R=120/20=6 A.');
 q('Elétrica','Eletrotécnica','Lei de Ohm','Potência','Um resistor de 10 ohms percorrido por 3 A dissipa:', ['9 W','30 W','60 W','90 W','300 W'],'D','P=R·I²=10·9=90 W.');
