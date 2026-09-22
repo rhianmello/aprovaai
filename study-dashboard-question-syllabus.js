@@ -66,14 +66,28 @@ function loadBank() {
   return loadingBank;
 }
 
+function questionContentItems(q) {
+  const linked = Array.isArray(q?.contentItems) ? q.contentItems : (Array.isArray(q?.content_items) ? q.content_items : []);
+  if (linked.length) return linked.map(item => ({
+    id: item?.id || '',
+    title: item?.title || q.assunto || 'Sem assunto',
+    subject: item?.subject || q.disciplina || 'Conhecimentos Específicos'
+  }));
+  return [{ id: '', title: q?.assunto || 'Sem assunto', subject: q?.disciplina || 'Conhecimentos Específicos' }];
+}
+
 function buildCounts() {
   const bySubject = new Map();
   const byTopic = new Map();
   for (const q of bank) {
-    const subject = q.disciplina || 'Conhecimentos Específicos';
-    const topic = q.assunto || 'Sem assunto';
-    bySubject.set(subject, (bySubject.get(subject) || 0) + 1);
-    byTopic.set(topicKey(subject, topic), (byTopic.get(topicKey(subject, topic)) || 0) + 1);
+    const seen = new Set();
+    for (const item of questionContentItems(q)) {
+      const key = topicKey(item.subject, item.title);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      bySubject.set(item.subject, (bySubject.get(item.subject) || 0) + 1);
+      byTopic.set(key, (byTopic.get(key) || 0) + 1);
+    }
   }
   return { bySubject, byTopic };
 }
@@ -137,12 +151,16 @@ function render() {
       const label = count === 1 ? '1 questão' : `${count} questões`;
       const disabled = count ? '' : ' disabled title="Ainda sem questões publicadas"';
       const subjectHint = selected ? '' : `<span class="topic-subject">${esc(item.subject)}</span>`;
-      return `<div class="list-row ${count ? '' : 'syllabus-zero'}"><b>${esc(item.title)}${subjectHint}</b><span class="muted">${label}</span><button class="btn secondary np-topic-train" data-topic="${esc(item.title)}"${disabled}>${count ? 'Treinar' : 'Sem questões'}</button></div>`;
+      return `<div class="list-row ${count ? '' : 'syllabus-zero'}"><b>${esc(item.title)}${subjectHint}</b><span class="muted">${label}</span><button class="btn secondary np-topic-train" data-item-id="${esc(item.id)}" data-topic="${esc(item.title)}" data-subject="${esc(item.subject)}"${disabled}>${count ? 'Treinar' : 'Sem questões'}</button></div>`;
     }).join('') || '<div class="empty">Nenhum item de edital cadastrado.</div>';
     list.dataset.syllabusSignature = listSignature;
     list.querySelectorAll('.np-topic-train:not([disabled])').forEach(button => {
       button.addEventListener('click', () => {
-        if (typeof window.studyTopic === 'function') window.studyTopic(button.dataset.topic || '');
+        if (typeof window.studyContentItem === 'function') {
+          window.studyContentItem(button.dataset.itemId || '', button.dataset.topic || '', button.dataset.subject || '');
+        } else if (typeof window.studyTopic === 'function') {
+          window.studyTopic(button.dataset.topic || '');
+        }
       });
     });
   }
