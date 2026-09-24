@@ -48,6 +48,46 @@ async function fetchAllQuestionPages(client, courseId, preparationId){
   return {...row,alternativas,contentItems:Array.isArray(row.content_items)?row.content_items:[]};
  });
 }
+async function fetchProtectedLegacyPages(client,courseId){
+ const rows=[],seen=new Set();let offset=0;const pageSize=500;
+ for(;;){
+  const {data,error}=await client.rpc('load_legacy_course_question_bank',{p_course_id:courseId,p_offset:offset,p_limit:pageSize});
+  if(error)throw error;
+  if(!Array.isArray(data))throw new Error('Resposta inválida ao carregar o banco protegido.');
+  if(!data.length)return rows;
+  for(const row of data){
+   if(!row?.id||seen.has(row.id))throw new Error('Paginação inconsistente no banco protegido.');
+   seen.add(row.id);rows.push({...row,contentItems:[]});
+  }
+  offset+=data.length;
+ }
+}
+function protectLegacyDashboard(client,course){
+ const cfg=window.STUDY_CONFIG;
+ if(!cfg||cfg.courseSlug!==course.slug||typeof cfg.bankLoader!=='function')return false;
+ window.STUDY_CONFIG={
+  ...cfg,
+  courseId:course.id,
+  bankLoader:()=>fetchProtectedLegacyPages(client,course.id),
+  historyLoader:async()=>{
+   const {data,error}=await client.rpc('load_legacy_question_history',{p_course_id:course.id});
+   if(error)throw error;
+   return(data||[]).map(x=>({id:x.question_id,answer:x.selected_answer,ok:x.is_correct,ts:new Date(x.answered_at).getTime()}));
+  },
+  attemptSaver:async entry=>{
+   const {data,error}=await client.rpc('save_legacy_question_attempt',{
+    p_course_id:course.id,p_question_id:String(entry.id),p_selected_answer:String(entry.answer),
+    p_is_correct:!!entry.ok,p_answered_at:new Date(entry.ts).toISOString()
+   });
+   if(error)throw error;return data===true;
+  },
+  errorClearer:async()=>{
+   const {error}=await client.rpc('clear_legacy_question_errors',{p_course_id:course.id});
+   if(error)throw error;return true;
+  }
+ };
+ return true;
+}
 async function configureDashboard(client,course){
  const {data:links,error:le}=await client.from('course_preparations').select('preparation_id,preparations(id,name,slug,edition_id,academic_positions(name,code),academic_editions(code,banca,level,quadro,official_name))').eq('course_id',course.id).eq('active',true);
  if(le)throw le;const prep=(links||[])[0]?.preparations;if(!prep)throw new Error('Preparação acadêmica não vinculada ao curso.');
@@ -72,13 +112,13 @@ if(!slug){page('Curso não configurado.','Identificador do curso inválido.');re
  try{
    await configureDashboard(client,course);
  }catch(configError){
-   const legacy=window.STUDY_CONFIG&&window.STUDY_CONFIG.courseSlug===course.slug&&typeof window.STUDY_CONFIG.bankLoader==='function';
+   const legacy=protectLegacyDashboard(client,course);
    if(!legacy)throw configError;
-   console.warn('[course-access] usando configuração legada para',course.slug,configError);
+   console.warn('[course-access] usando banco legado protegido para',course.slug,configError);
  }
  window.__NP_AUTH_USER=session.user;window.__NP_COURSE=course;
  const bal=document.createElement('script');bal.src='./question-balance-runtime.js?v=20260922-3';
- bal.onload=()=>{const s=document.createElement('script');s.src='./study-dashboard-stable-v2.js?v=20260924-5';s.onload=()=>{const q=document.createElement('script');q.src='./study-dashboard-question-syllabus.js?v=20260922-3';document.body.appendChild(q)};document.body.appendChild(s);s.onerror=()=>page('Não foi possível abrir a área de estudos.','O painel não carregou. Tente atualizar a página novamente.')};
+ bal.onload=()=>{const s=document.createElement('script');s.src='./study-dashboard-stable-v2.js?v=20260924-6';s.onload=()=>{const q=document.createElement('script');q.src='./study-dashboard-question-syllabus.js?v=20260922-3';document.body.appendChild(q)};document.body.appendChild(s);s.onerror=()=>page('Não foi possível abrir a área de estudos.','O painel não carregou. Tente atualizar a página novamente.')};
  bal.onerror=()=>page('Não foi possível preparar o banco de questões.','O componente de balanceamento não carregou. Atualize a página e tente novamente.');
  document.body.appendChild(bal);
 }catch(e){console.error('course-access',e);page('Não foi possível abrir sua plataforma.',e.message==='timeout'?'O serviço demorou para responder.':(e.message||'Erro ao validar o acesso.'))}})();
