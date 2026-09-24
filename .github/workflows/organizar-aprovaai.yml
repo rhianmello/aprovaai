@@ -146,3 +146,6 @@ jobs:
 
       - name: Auditar fontes dos bancos legados
         run: node scripts/audit-static-question-banks.mjs
+
+      - name: Validar autorização administrativa
+        run: node scripts/test-mission-authorization.mjs
