@@ -62,7 +62,7 @@ async function configureDashboard(client,course){
 if(!slug){page('Curso não configurado.','Identificador do curso inválido.');return}loading();
 (async()=>{try{
  if(!window.supabase?.createClient){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';s.async=true;document.head.appendChild(s);await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error('timeout')),7000);s.onload=()=>{clearTimeout(t);resolve()};s.onerror=()=>{clearTimeout(t);reject(new Error('falha'))}})}
- const client=window.supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
+ const client=(window.npSupabaseClient||(window.npSupabaseClient=window.supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}})));
  const {data:{session}}=await Promise.race([client.auth.getSession(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),7000))]);
  if(!session?.user){sessionStorage.setItem('ap_target',location.href);location.replace('login.html');return}
  const{data:course,error:ce}=await client.from('courses').select('id,name,slug,active').eq('slug',slug).maybeSingle();

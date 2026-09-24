@@ -25,7 +25,7 @@ async function audit(page){
         vm.runInContext(read(file),context,{timeout:5000,filename:file});
         sources.push(file);
       }
-    }else if(match[2].includes('window.STUDY_CONFIG=')){
+    }else if(match[2].includes('window.STUDY_CONFIG=')||match[2].includes('window.INSPETOR_ELETRICA_EXPANSAO_EXTRA_BANK=')){
       vm.runInContext(match[2],context,{timeout:5000,filename:page});
     }
   }
@@ -44,5 +44,8 @@ async function audit(page){
   return {page,kind:'static-source-audit-not-browser',sources,loaded:loaded.length,distinctIds:bank.length,duplicateIds:loaded.length-bank.length,duplicateStatementGroups:[...texts.values()].filter(n=>n>1).length,minTopic:rows.length?Math.min(...rows.map(r=>r.count)):0,topics:rows};
 }
 for(const page of ['ace_marica_app_fixed.html','inspetor_eletrica.html']){
-  console.log('STATIC_BANK_AUDIT '+JSON.stringify(await audit(page)));
+  const result=await audit(page);
+  console.log('STATIC_BANK_AUDIT '+JSON.stringify(result));
+  if(result.minTopic<50)throw new Error(page+': tópico com menos de 50 questões válidas');
+  if(result.duplicateIds)throw new Error(page+': IDs duplicados no carregador');
 }
