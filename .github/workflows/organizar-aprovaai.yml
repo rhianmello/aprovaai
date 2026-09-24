@@ -60,18 +60,67 @@ jobs:
           if 'inspetor_eletrica.html' not in cargos:
               raise SystemExit('transpetro_cargos.html não possui a trilha Inspetor de Elétrica')
 
-          # A landing da Transpetro agora é um catálogo de cargos.
-          # A compra ocorre na preparação específica de cada cargo, portanto
-          # não exigimos mais um CTA de checkout diretamente nesta página.
-          catalog_markers = [
-              'Carregando cargos e preparações',
-              'catalog-section',
-              'Acessar preparação',
-              'supabase.createClient',
+          # Valide a interface atual Estado -> Edital -> Cargo e seu contrato.
+          from html.parser import HTMLParser
+          import re
+
+          class LandingParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.selects = {}
+                  self.labels = set()
+                  self.ids = set()
+                  self.scripts = []
+                  self.current_select = None
+
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  if 'id' in attrs:
+                      self.ids.add(attrs['id'])
+                  if tag == 'label':
+                      self.labels.add(attrs.get('for'))
+                  if tag == 'select':
+                      self.current_select = attrs.get('id')
+                      if self.current_select in self.selects:
+                          raise SystemExit('Filtro duplicado: ' + self.current_select)
+                      self.selects[self.current_select] = {'attrs': attrs, 'values': set()}
+                  if tag == 'option' and self.current_select:
+                      self.selects[self.current_select]['values'].add(attrs.get('value', ''))
+                  if tag == 'script' and attrs.get('src'):
+                      self.scripts.append(attrs['src'])
+
+              def handle_endtag(self, tag):
+                  if tag == 'select':
+                      self.current_select = None
+
+          parsed = LandingParser()
+          parsed.feed(landing)
+          for control in ('state', 'edital', 'cargo'):
+              if control not in parsed.selects or control not in parsed.labels:
+                  raise SystemExit('Filtro ou label ausente: ' + control)
+              if 'disabled' not in parsed.selects[control]['attrs']:
+                  raise SystemExit('Filtro deve aguardar carregamento/seleção: ' + control)
+              if not re.search(r"\$\('" + control + r"'\)\.onchange\s*=", landing):
+                  raise SystemExit('Filtro sem evento de seleção: ' + control)
+          states = set('AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split())
+          if not states.issubset(parsed.selects['state']['values']):
+              raise SystemExit('Lista de estados incompleta')
+          if not {'status', 'selection'}.issubset(parsed.ids):
+              raise SystemExit('Regiões de status/resultado ausentes')
+          if not any('@supabase/supabase-js@2' in src for src in parsed.scripts):
+              raise SystemExit('Landing não carrega o cliente Supabase')
+          landing_markers = [
+              'supabase.createClient', "sb.from('courses')", ".eq('active',true)",
+              'function updateEditais()', 'function updateCargos()', 'function showCourse(',
+              "$('state').disabled=false", "$('edital').disabled=false", "$('cargo').disabled=!edital",
+              'Carregando preparações', 'Nenhuma preparação Transpetro ativa encontrada.',
+              'Não foi possível carregar as preparações agora.', 'if(error)throw error',
+              'catch(e)', 'Acessar preparação', 'courseHref(c)', 'curso-landing.html?course=',
+              'transpetro-landing-v2.html',
           ]
-          missing_catalog = [m for m in catalog_markers if m not in landing]
-          if missing_catalog:
-              raise SystemExit('Catálogo Transpetro incompleto: ' + ', '.join(missing_catalog))
+          missing_landing = [m for m in landing_markers if m not in landing]
+          if missing_landing:
+              raise SystemExit('Fluxo Transpetro incompleto: ' + ', '.join(missing_landing))
 
           if 'inspetor_eletrica_expansao.js' not in inspector:
               raise SystemExit('inspetor_eletrica.html não carrega o banco expandido')
