@@ -30,9 +30,6 @@ jobs:
               'transpetro_cargos.html',
               'transpetro.html',
               'inspetor_eletrica.html',
-              'INSPETOR_ELETRICA/banco-questoes/inspetor_eletrica_banco.js',
-              'INSPETOR_ELETRICA/banco-questoes/inspetor_eletrica_banco_geral.js',
-              'INSPETOR_ELETRICA/inspetor_eletrica_expansao.js',
               'INSPETOR_ELETRICA/plano_estudo_detalhado.js',
           ]
           missing = [p for p in required if not Path(p).is_file()]
@@ -122,15 +119,15 @@ jobs:
           if missing_landing:
               raise SystemExit('Fluxo Transpetro incompleto: ' + ', '.join(missing_landing))
 
-          if 'inspetor_eletrica_expansao.js' not in inspector:
-              raise SystemExit('inspetor_eletrica.html não carrega o banco expandido')
+          course_access = Path('course-access.js').read_text(encoding='utf-8')
+          if 'load_legacy_course_question_bank' not in course_access:
+              raise SystemExit('course-access.js não carrega o banco legado protegido')
+          if 'save_legacy_question_attempt' not in course_access or 'clear_legacy_question_errors' not in course_access:
+              raise SystemExit('course-access.js não persiste o histórico legado protegido')
+          if 'course-access.js' not in inspector:
+              raise SystemExit('inspetor_eletrica.html não carrega o controle de acesso protegido')
           if 'plano_estudo_detalhado.js' not in inspector:
               raise SystemExit('inspetor_eletrica.html não carrega o plano detalhado')
-
-          for p in required[7:9]:
-              text = Path(p).read_text(encoding='utf-8')
-              if 'INSPETOR_ELETRICA' not in text:
-                  raise SystemExit(f'{p} não exporta o banco esperado')
 
           plano = Path('INSPETOR_ELETRICA/plano_estudo_detalhado.js').read_text(encoding='utf-8')
           if 'window.INSPETOR_PLANO_DETALHADO' not in plano:
@@ -144,7 +141,7 @@ jobs:
           node --check course-access.js
           node scripts/test-student-question-bank.mjs
 
-      - name: Auditar fontes dos bancos legados
+      - name: Auditar proteção dos bancos legados
         run: node scripts/audit-static-question-banks.mjs
 
       - name: Validar autorização administrativa
