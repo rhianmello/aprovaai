@@ -143,3 +143,6 @@ jobs:
         run: |
           node --check course-access.js
           node scripts/test-student-question-bank.mjs
+
+      - name: Auditar fontes dos bancos legados
+        run: node scripts/audit-static-question-banks.mjs

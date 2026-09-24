@@ -39,7 +39,14 @@ async function fetchAllQuestionPages(client, courseId, preparationId){
   console.warn('[course-access] RPC v2 indisponível, usando fallback',error);
   rows=await load('load_student_question_bank');
  }
- return rows.map(row=>({...row,contentItems:Array.isArray(row.content_items)?row.content_items:[]}));
+ return rows.map(row=>{
+  // Older imports store [{letra,texto}]; the renderer expects {A:text,...}.
+  // Preserve every original letter and answer; only adapt the transport shape.
+  const alternativas=Array.isArray(row.alternativas)
+   ?Object.fromEntries(row.alternativas.map(option=>[option.letra,option.texto]))
+   :row.alternativas;
+  return {...row,alternativas,contentItems:Array.isArray(row.content_items)?row.content_items:[]};
+ });
 }
 async function configureDashboard(client,course){
  const {data:links,error:le}=await client.from('course_preparations').select('preparation_id,preparations(id,name,slug,edition_id,academic_positions(name,code),academic_editions(code,banca,level,quadro,official_name))').eq('course_id',course.id).eq('active',true);

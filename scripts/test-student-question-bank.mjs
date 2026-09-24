@@ -47,4 +47,22 @@ for (const code of ['42501','NETWORK']) {
 }
 await assert.rejects(()=>load(clientFor(5,{repeat:true}),1,'sap'),/Paginação inconsistente/);
 checks++;
+
+const arrayOptions=['A','B','C','D','E'].map((letra,i)=>({letra,texto:'Alternative '+i}));
+const original=[
+  {id:'array',alternativas:arrayOptions,gabarito:'C',content_items:[]},
+  {id:'object',alternativas:{A:'One',B:'Two'},gabarito:'B',content_items:[]},
+  {id:'true-false',alternativas:null,gabarito:'CERTO',tipo:'certo_errado',content_items:[]}
+];
+const snapshot=JSON.stringify(original);
+const transport={rpc(){return {order(){return {async range(from){return {data:from?[]:original,error:null}}}}}}};
+const normalized=await load(transport,1,'sap');
+assert.deepEqual(normalized[0].alternativas,{A:'Alternative 0',B:'Alternative 1',C:'Alternative 2',D:'Alternative 3',E:'Alternative 4'});
+assert.equal(normalized[0].gabarito,'C');
+assert.deepEqual(normalized[1].alternativas,original[1].alternativas);
+assert.equal(normalized[2].alternativas,null);
+assert.equal(normalized[2].gabarito,'CERTO');
+assert.equal(JSON.stringify(original),snapshot,'Never mutate source answers or alternatives');
+checks+=3;
+
 console.log('OK: '+checks+' pagination regression scenarios; full bank and syllabus links preserved.');
