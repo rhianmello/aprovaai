@@ -82,7 +82,9 @@ jobs:
                   continue
               text = p.read_text(encoding='utf-8')
               rel_tracker = os.path.relpath(tracker, p.parent).replace(os.sep, '/')
-              tracker_tag = f'<script src="{rel_tracker}"></script>'
+              current_tracker = re.search(r'<script\s+src=["\'][^"\']*visitor-tracker\.js(\?[^"\']*)?["\']', text, flags=re.I)
+              tracker_query = (current_tracker.group(1) or '') if current_tracker else ''
+              tracker_tag = f'<script src="{rel_tracker}{tracker_query}"></script>'
               new = re.sub(r'<script\s+src=["\'][^"\']*visitor-tracker\.js[^"\']*["\']\s*></script>', '', text, flags=re.I)
               low = new.lower()
               marker = '</head>'
