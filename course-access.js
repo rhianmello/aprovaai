@@ -14,13 +14,40 @@ function makePlan(items,editionCode){
  days.forEach((day,i)=>{const names=subjects.filter((_,j)=>j%days.length===i),fallback=subjects.length?[subjects[i%subjects.length]]:[],use=names.length?names:fallback,topics=[];use.forEach(s=>(by[s]||[]).slice(0,8).forEach(x=>topics.push(x.title)));plan.push({day,title:use.length?use.join(' + '):'Estudo dirigido',q:0,keywords:use,topics:topics.length?topics:['Conteúdo do edital']})});
  return plan;
 }
+async function fetchAllQuestionPages(client, courseId, preparationId){
+ const args={p_course_id:courseId,p_preparation_id:preparationId},pageSize=500;
+ const load=async rpcName=>{
+  const rows=[],seen=new Set();let offset=0;
+  for(;;){
+   const {data,error}=await client.rpc(rpcName,args).order('id',{ascending:true}).range(offset,offset+pageSize-1);
+   if(error)throw error;
+   if(!Array.isArray(data))throw new Error('Resposta inválida ao carregar o banco de questões.');
+   if(!data.length)return rows;
+   for(const row of data){
+    if(!row?.id||seen.has(row.id))throw new Error('Paginação inconsistente no banco de questões. Recarregue a página.');
+    seen.add(row.id);rows.push(row);
+   }
+   // Advance by the number actually returned, even if the server cap is smaller.
+   offset+=data.length;
+  }
+ };
+ let rows;
+ try{rows=await load('load_student_question_bank_v2')}
+ catch(error){
+  // Only a missing v2 RPC permits legacy fallback; authorization/network errors do not.
+  if(error?.code!=='PGRST202')throw error;
+  console.warn('[course-access] RPC v2 indisponível, usando fallback',error);
+  rows=await load('load_student_question_bank');
+ }
+ return rows.map(row=>({...row,contentItems:Array.isArray(row.content_items)?row.content_items:[]}));
+}
 async function configureDashboard(client,course){
  const {data:links,error:le}=await client.from('course_preparations').select('preparation_id,preparations(id,name,slug,edition_id,academic_positions(name,code),academic_editions(code,banca,level,quadro,official_name))').eq('course_id',course.id).eq('active',true);
  if(le)throw le;const prep=(links||[])[0]?.preparations;if(!prep)throw new Error('Preparação acadêmica não vinculada ao curso.');
  const {data:items,error:ie}=await client.from('academic_content_items').select('id,title,subject_id,topic_id,academic_subjects(name)').eq('preparation_id',prep.id).eq('active',true).order('sort_order');if(ie)throw ie;
  const subjectName=x=>x?.academic_subjects?.name||'Conhecimentos Específicos';
  const contentItems=(items||[]).map((x,index)=>({id:x.id,title:x.title,subject:subjectName(x),order:index}));
- const bankLoader=async()=>{let r=await client.rpc('load_student_question_bank_v2',{p_course_id:course.id,p_preparation_id:prep.id});if(r.error){console.warn('[course-access] RPC v2 indisponível, usando fallback',r.error);r=await client.rpc('load_student_question_bank',{p_course_id:course.id,p_preparation_id:prep.id})}if(r.error)throw r.error;return(r.data||[]).map(row=>({...row,contentItems:Array.isArray(row.content_items)?row.content_items:[]}))};
+ const bankLoader=()=>fetchAllQuestionPages(client,course.id,prep.id);
  const pos=prep.academic_positions?.name||course.name.replace(/^Transpetro 2026 — /,''),edition=prep.academic_editions||{},qLabel=edition.code?`Edital ${edition.code}/2026`:'';
  const examSize=edition.code==='03'?60:(edition.code==='01'?50:70);
  window.STUDY_CONFIG={slug:course.slug,courseSlug:course.slug,courseId:course.id,preparationId:prep.id,title:pos,shortTitle:`Transpetro 2026 • ${pos}`,badge:`TRANSPETRO 2026 • ${pos.toUpperCase()}`,subtitle:`${qLabel} • ${edition.banca||'Fundação Cesgranrio'}`,backUrl:'minha-conta.html',videoQuery:`Transpetro 2026 ${pos} Cesgranrio`,historyKey:`aprovaai_${course.slug}_history_v1`,description:`Preparação específica para ${pos}, baseada no edital do processo seletivo público da Transpetro 2026.`,contentItems,bankLoader,historyLoader:async()=>{const r=await client.from('question_attempts').select('question_id,selected_answer,is_correct,answered_at').eq('user_id',window.__NP_AUTH_USER.id).eq('preparation_id',prep.id).order('answered_at',{ascending:true});if(r.error)throw r.error;return(r.data||[]).map(x=>({id:x.question_id,answer:x.selected_answer,ok:x.is_correct,ts:new Date(x.answered_at).getTime()}))},attemptSaver:async entry=>{const r=await client.from('question_attempts').insert({user_id:window.__NP_AUTH_USER.id,question_id:entry.id,preparation_id:prep.id,selected_answer:entry.answer,is_correct:entry.ok,answered_at:new Date(entry.ts).toISOString()});if(r.error)throw r.error;return true},group:q=>{if(q.disciplina)return q.disciplina;const s=norm([q.assunto,q.subassunto,q.enunciado].join(' '));if(s.includes('portugues'))return'Português';if(s.includes('ingles'))return'Língua Inglesa';return'Específicos'},plan:makePlan(items,edition.code),presets:[{label:`🎯 Simulado completo — ${examSize}`,groups:[],n:examSize,simulado:true}]};

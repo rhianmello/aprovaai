@@ -138,3 +138,8 @@ jobs:
 
           print('OK: estrutura do Nós Passa validada.')
           PY
+
+      - name: Validar carregamento completo do banco
+        run: |
+          node --check course-access.js
+          node scripts/test-student-question-bank.mjs
