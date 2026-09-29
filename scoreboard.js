@@ -41,7 +41,7 @@ function renderGames(groups){const box=$('games');if(!groups.length){box.innerHT
 function rerenderMainOnly(){const fs=filteredFixtures(),groups=groupsFor(fs);$('count').textContent=fs.length+' '+tr.games;renderGames(groups)}
 function rerender(){renderSidebar(groupsFor(state.data?.fixtures||[]));rerenderMainOnly()}
 async function loadLocalLeagues(){if(!state.viewerCountry)return;try{const r=await fetch(CATALOG+'?action=leagues&country='+encodeURIComponent(state.viewerCountry));const d=await r.json();if(r.ok&&!d.error)state.localLeagues=(d.leagues||[]).slice(0,80)}catch(e){console.warn('local leagues',e)}}
-function updateStamp(d){const fetched=d?.fetched_at?new Date(d.fetched_at):new Date();let when='';try{when=new Intl.DateTimeFormat(lang,{hour:'2-digit',minute:'2-digit',hour12:false}).format(fetched)}catch{}const live=(d?.fixtures||[]).filter(f=>statusType(f.status?.short)==='live').length;$('source').innerHTML='<b>'+tr.updated+'</b> • '+esc(when)+(d?.source?' • '+esc(d.source==='sportscore'?'SportScore':'API-Football'):'')+(live?' • <span class="source-live"><span class="live-dot"></span>'+live+' '+tr.live+'</span>':'')}
+function updateStamp(d){const fetched=d?.fetched_at?new Date(d.fetched_at):null;let when='';try{if(fetched&&!Number.isNaN(fetched.getTime()))when=new Intl.DateTimeFormat(lang,{dateStyle:'short',timeStyle:'short'}).format(fetched)}catch{}const live=d?.stale?0:(d?.fixtures||[]).filter(f=>statusType(f.status?.short)==='live').length;const label=d?.stale?'Dados anteriores — atualização indisponível':tr.updated;const source=d?.source&&d.source!=='unavailable'?' • '+esc(d.source==='sportscore'?'SportScore':'API-Football'):'';$('source').innerHTML='<b>'+esc(label)+'</b>'+(when?' • '+esc(when):'')+source+(live?' • <span class="source-live"><span class="live-dot"></span>'+live+' '+tr.live+'</span>':'')}
 function setActiveFilter(filter){
   document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x.dataset.filter===filter));
 }
@@ -64,6 +64,7 @@ async function loadLive(){
     $('count').textContent=(d.fixtures||[]).length+' '+tr.games;
     renderGames(groups);
     updateStamp(d);
+    if(d.stale)$('games').innerHTML='<div class="empty">Não foi possível confirmar placares ao vivo agora. Tente novamente em instantes.</div>';
   }catch(e){
     $('games').innerHTML='<div class="error">'+tr.error+'<br><small>Live feed unavailable.</small></div>';
     console.error(e);
