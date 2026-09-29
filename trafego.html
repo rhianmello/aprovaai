@@ -1,19 +1,61 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Tráfego — Nós Passa</title>
-<style>body{margin:0;background:#07100b;color:#f5f7f5;font-family:Arial,sans-serif}.w{max-width:1000px;margin:auto;padding:34px 18px}h1{font-size:36px}.box,.k{border:1px solid #25402f;background:#0b1b12;border-radius:16px;padding:18px}.login{max-width:420px}.row{display:flex;gap:10px;flex-wrap:wrap}input,button,select{padding:12px;border-radius:10px;border:1px solid #31503a;background:#08140d;color:#fff}input{width:100%;margin:6px 0}button{background:#67e08c;color:#06100b;font-weight:900;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.k small{color:#9eb2a4}.k b{display:block;font-size:30px;margin-top:7px}.panel{margin-top:12px}.table{overflow:auto}table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #25402f;text-align:left;font-size:12px}.muted{color:#9eb2a4;font-size:12px}.hide{display:none}@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><div class="w"><h1>Tráfego do Nós Passa</h1>
-<div id="login" class="box login"><p class="muted">Entre com sua conta administrativa do Nós Passa.</p><input id="email" type="email" placeholder="E-mail"><input id="pass" type="password" placeholder="Senha"><button id="enter">Entrar</button><p id="msg" class="muted"></p></div>
-<div id="dash" class="hide"><div class="row"><select id="period"><option value="1">Hoje</option><option value="7" selected>Últimos 7 dias</option><option value="30">Últimos 30 dias</option></select><button id="refresh">Atualizar</button><button id="logout">Sair</button></div>
-<div class="grid"><div class="k"><small>Visitantes</small><b id="v">—</b></div><div class="k"><small>Visitas</small><b id="s">—</b></div><div class="k"><small>Páginas vistas</small><b id="p">—</b></div><div class="k"><small>Online agora</small><b id="o">—</b></div></div>
-<div class="box panel"><h3>Origens</h3><div id="sources"></div></div><div class="box panel"><h3>Países</h3><div id="countries"></div></div><div class="box panel"><h3>Páginas</h3><div id="pages" class="table"></div></div></div></div>
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Login — Nós Passa</title>
+<link href="https://cdn.jsdelivr.net/npm/svgmap@2.10.1/dist/svgMap.min.css" rel="stylesheet">
+<style>
+:root{--bg:#040a07;--panel:#08140d;--panel2:#0c1c13;--line:#183624;--green:#62f39a;--green2:#baffcf;--cyan:#5eeaf0;--text:#eef7f1;--muted:#758b7c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,#123c24 0,transparent 32%),var(--bg);color:var(--text);font-family:Arial,sans-serif;min-height:100vh}.shell{max-width:1320px;margin:auto;padding:24px 18px 50px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}.brand{font-size:25px;font-weight:950}.brand b{color:var(--green)}.secure{font-size:10px;color:var(--green2);border:1px solid #275638;border-radius:999px;padding:8px 11px;background:#0c2115}
+.login{max-width:430px;margin:12vh auto 0;border:1px solid var(--line);background:#08140de8;border-radius:22px;padding:26px;box-shadow:0 30px 90px #0009}.login h1{margin:0 0 6px;font-size:29px}.muted{color:var(--muted);font-size:11px;line-height:1.55}
+input,button,select{font:inherit}.login input{width:100%;padding:13px 14px;margin:6px 0;border:1px solid #244b33;background:#050d08;color:#fff;border-radius:11px;outline:none}.btn{border:1px solid #2e6a43;background:#122a1b;color:#d9ebdf;padding:10px 13px;border-radius:10px;cursor:pointer;font-size:11px;font-weight:900}.btn.primary{background:var(--green);color:#041008;border-color:var(--green)}
+.hide{display:none!important}.dash-head{display:flex;justify-content:space-between;gap:15px;align-items:end;margin-bottom:14px}.dash-head h1{font-size:35px;letter-spacing:-1.5px;margin:0}.controls{display:flex;gap:8px;flex-wrap:wrap}.controls select{background:#08140d;color:#c9d8ce;border:1px solid #1e412b;border-radius:10px;padding:10px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.kpi{position:relative;overflow:hidden;border:1px solid var(--line);background:linear-gradient(145deg,#0a1a11,#061009);border-radius:16px;padding:17px}.kpi:after{content:"";position:absolute;width:80px;height:80px;border:1px solid #62f39a17;border-radius:50%;right:-28px;top:-28px}.kpi small{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#758b7c;font-weight:900}.kpi strong{font-size:31px;display:block;margin-top:7px}.kpi span{display:block;margin-top:4px;color:#6f8576;font-size:9px}.kpi.new strong{color:var(--green2)}.kpi.online strong{color:var(--cyan)}
+.grid{display:grid;grid-template-columns:1.65fr .75fr;gap:12px;margin-top:12px}.panel{border:1px solid var(--line);background:#07120cdd;border-radius:18px;padding:17px;overflow:hidden}.panel h2{margin:0;font-size:14px}.panel .sub{color:#698071;font-size:9px;margin:4px 0 13px}.map-wrap{position:relative;min-height:480px;border-radius:14px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#10281a,#040a07 72%);border:1px solid #163522}.map-wrap:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#62f39a09 1px,transparent 1px),linear-gradient(90deg,#62f39a09 1px,transparent 1px);background-size:30px 30px;z-index:0}.map-wrap:after{content:"GLOBAL VISITOR NETWORK";position:absolute;left:14px;bottom:12px;color:#4f755c;font-size:8px;letter-spacing:2px;font-weight:900}.map-inner{position:relative;z-index:1;padding:15px;min-height:465px}.svgMap-map-wrapper{background:transparent!important}.svgMap-map-image{background:transparent!important}.svgMap-country{stroke:#123321!important;stroke-width:.7!important}.svgMap-country:hover{stroke:#baffcf!important}
+.radar{position:absolute;width:190px;height:190px;right:-50px;top:-50px;border:1px solid #5eeaf020;border-radius:50%;box-shadow:0 0 0 28px #5eeaf008,0 0 0 56px #5eeaf008;animation:pulse 4s ease-in-out infinite;pointer-events:none}@keyframes pulse{50%{opacity:.35;transform:scale(1.05)}}
+.country-list,.source-list{display:grid;gap:8px}.row{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid #142d1e;font-size:11px}.row:last-child{border-bottom:0}.row b{font-size:12px}.bar{height:5px;background:#11281a;border-radius:99px;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:99px}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.table{overflow:auto;max-height:330px}table{width:100%;border-collapse:collapse}td,th{padding:9px 7px;border-bottom:1px solid #153020;text-align:left;font-size:10px;white-space:nowrap}th{color:#6c8273;text-transform:uppercase;font-size:8px}.adm-note{margin-top:8px;color:#66d98c;font-size:9px}.error{color:#ff8594}
+@media(max-width:900px){.kpis{grid-template-columns:1fr 1fr}.grid,.bottom{grid-template-columns:1fr}.map-wrap{min-height:350px}.map-inner{min-height:335px}.dash-head{align-items:start;flex-direction:column}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/svgmap@2.10.1/dist/svgMap.min.js"></script>
+</head><body><div class="shell">
+<div class="topbar"><div class="brand">Nós <b>Passa</b></div><div class="secure">● ÁREA ADMINISTRATIVA</div></div>
+
+<section id="login" class="login"><h1>Login</h1><p class="muted">Acesso reservado ao administrador.</p><input id="email" type="email" placeholder="E-mail"><input id="pass" type="password" placeholder="Senha"><button id="enter" class="btn primary">Entrar</button><p id="msg" class="muted"></p></section>
+
+<section id="dash" class="hide">
+<div class="dash-head"><div><h1>Central Global</h1><div class="muted">Audiência real do Nós Passa em tempo quase real.</div><div class="adm-note">✓ Este navegador ADM é removido das métricas automaticamente.</div></div><div class="controls"><select id="period"><option value="1">Hoje</option><option value="7" selected>Últimos 7 dias</option><option value="30">Últimos 30 dias</option></select><button id="refresh" class="btn">↻ Atualizar</button><button id="logout" class="btn">Sair</button></div></div>
+
+<div class="kpis">
+<div class="kpi new"><small>Pessoas novas</small><strong id="new">—</strong><span>primeira visita no período</span></div>
+<div class="kpi"><small>Visitantes únicos</small><strong id="v">—</strong><span>navegadores únicos no período</span></div>
+<div class="kpi"><small>Páginas vistas</small><strong id="p">—</strong><span>visualizações registradas</span></div>
+<div class="kpi online"><small>Online agora</small><strong id="o">—</strong><span>ativos nos últimos 5 min</span></div>
+</div>
+
+<div class="grid">
+<article class="panel"><h2>Mapa global de visitantes</h2><div class="sub">Quanto mais intenso o país, maior o número de visitantes únicos.</div><div class="map-wrap"><div class="radar"></div><div id="world-map" class="map-inner"></div></div></article>
+<aside class="panel"><h2>Países</h2><div class="sub">Visitantes únicos no período.</div><div id="countries" class="country-list"></div></aside>
+</div>
+
+<div class="bottom">
+<article class="panel"><h2>Origem do tráfego</h2><div class="sub">Como as pessoas chegaram até o site.</div><div id="sources" class="source-list"></div></article>
+<article class="panel"><h2>Páginas mais acessadas</h2><div class="sub">Conteúdo consumido pela audiência.</div><div id="pages" class="table"></div></article>
+</div>
+</section></div>
 <script>
 const U='https://ztqtcbzjesrkuaijmylm.supabase.co',K='sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d';
-const sb=supabase.createClient(U,K);const $=id=>document.getElementById(id);const num=x=>Number(x||0).toLocaleString('pt-BR');
+const sb=supabase.createClient(U,K,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
+const $=id=>document.getElementById(id),num=x=>Number(x||0).toLocaleString('pt-BR');
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const names={BR:'Brasil',US:'Estados Unidos',CA:'Canadá',CN:'China',PT:'Portugal',DE:'Alemanha',PL:'Polônia',TW:'Taiwan',NG:'Nigéria',GB:'Reino Unido',ES:'Espanha',FR:'França',IT:'Itália',AR:'Argentina',MX:'México',JP:'Japão',IN:'Índia',AU:'Austrália'};
 async function authOK(){const a=await sb.auth.getSession();if(!a.data.session)return false;const r=await sb.rpc('is_admin');return !r.error&&r.data===true}
-async function load(){const days=Number($('period').value);const end=new Date(),start=new Date();if(days===1)start.setHours(0,0,0,0);else start.setDate(start.getDate()-(days-1));const r=await sb.rpc('admin_visitor_analytics',{p_start:start.toISOString(),p_end:end.toISOString()});if(r.error){$('msg').textContent=r.error.message;return}const d=r.data||{},x=d.summary||{};$('v').textContent=num(x.visitors);$('s').textContent=num(x.visits);$('p').textContent=num(x.pageviews);$('o').textContent=num(x.online_now);
-$('sources').innerHTML=(d.sources||[]).slice(0,10).map(x=>'<p>'+String(x.source||'Direto')+' — <b>'+num(x.pageviews||x.visitors)+'</b></p>').join('')||'<p class="muted">Sem dados.</p>';
-$('countries').innerHTML=(d.countries||[]).slice(0,10).map(x=>'<p>'+String(x.country_code||'—')+' — <b>'+num(x.visitors)+'</b></p>').join('')||'<p class="muted">Sem dados.</p>';
-$('pages').innerHTML='<table><thead><tr><th>Página</th><th>Views</th><th>Visitantes</th></tr></thead><tbody>'+(d.pages||[]).slice(0,20).map(x=>'<tr><td>'+String(x.path||'')+'</td><td>'+num(x.pageviews)+'</td><td>'+num(x.visitors)+'</td></tr>').join('')+'</tbody></table>'}
-async function show(){if(await authOK()){$('login').classList.add('hide');$('dash').classList.remove('hide');load()}}
+async function excludeSelf(){const id=localStorage.getItem('np_visitor_id');if(id&&UUID.test(id))await sb.rpc('exclude_my_admin_browser',{p_visitor_id:id})}
+function bars(rows,id,key){const el=$(id),max=Math.max(1,...rows.map(x=>Number(x[key]||0)));el.innerHTML=rows.slice(0,12).map(x=>'<div class="row"><div>'+String(id==='countries'?(names[x.country_code]||x.country_code||'—'):(x.source||'Direto'))+'<div class="bar"><i style="width:'+Math.max(3,Number(x[key]||0)/max*100)+'%"></i></div></div><b>'+num(x[key])+'</b></div>').join('')||'<div class="muted">Sem dados.</div>'}
+function map(rows){const target=$('world-map');target.innerHTML='';if(typeof svgMap==='undefined'){target.innerHTML='<div class="muted">Mapa indisponível.</div>';return}const values={};rows.forEach(x=>{if(x.country_code&&x.country_code!=='—')values[x.country_code]={visitors:Number(x.visitors||0),pageviews:Number(x.pageviews||0)}});new svgMap({targetElementID:'world-map',colorNoData:'#0b2115',colorMin:'#1c6238',colorMax:'#62f39a',data:{data:{visitors:{name:'Visitantes',format:'{0}',thousandSeparator:'.'},pageviews:{name:'Pageviews',format:'{0}',thousandSeparator:'.'}},applyData:'visitors',values}})}
+async function load(){const days=Number($('period').value),end=new Date(),start=new Date();if(days===1)start.setHours(0,0,0,0);else start.setDate(start.getDate()-(days-1));const r=await sb.rpc('admin_visitor_analytics',{p_start:start.toISOString(),p_end:end.toISOString()});if(r.error){$('msg').textContent=r.error.message;return}const d=r.data||{},s=d.summary||{};$('new').textContent=num(s.new_visitors);$('v').textContent=num(s.visitors);$('p').textContent=num(s.pageviews);$('o').textContent=num(s.online_now);bars(d.countries||[],'countries','visitors');bars(d.sources||[],'sources','pageviews');map(d.countries||[]);$('pages').innerHTML='<table><thead><tr><th>Página</th><th>Views</th><th>Visitantes</th></tr></thead><tbody>'+(d.pages||[]).slice(0,20).map(x=>'<tr><td>'+String(x.path||'')+'</td><td>'+num(x.pageviews)+'</td><td>'+num(x.visitors)+'</td></tr>').join('')+'</tbody></table>'}
+async function show(){if(await authOK()){await excludeSelf();$('login').classList.add('hide');$('dash').classList.remove('hide');await load()}}
 $('enter').onclick=async()=>{const r=await sb.auth.signInWithPassword({email:$('email').value,password:$('pass').value});if(r.error){$('msg').textContent='Login inválido.';return}if(!(await authOK())){$('msg').textContent='Esta conta não é administradora.';await sb.auth.signOut();return}show()};
 $('refresh').onclick=load;$('period').onchange=load;$('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};show();
 </script></body></html>
