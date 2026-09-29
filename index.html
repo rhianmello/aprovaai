@@ -1,104 +1,44 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Nós Passa — futebol, estatísticas, palpites e resenha entre amigos.">
-  <meta name="robots" content="index,follow">
-  <link rel="canonical" href="https://www.nospassa.com.br/">
-  <meta name="theme-color" content="#07120d">
-  <title>Nós Passa — Futebol</title>
-  <style>
-    :root{
-      --bg:#06100b;--panel:#0b1b12;--panel2:#10261a;--line:#25402f;
-      --text:#f5f7f5;--muted:#9eb2a4;--green:#67e08c;--green2:#b8ffca;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    body{
-      min-height:100vh;
-      background:
-        radial-gradient(circle at 50% -15%,#1b5532 0,transparent 38%),
-        radial-gradient(circle at 90% 100%,#12341f 0,transparent 35%),
-        var(--bg);
-      overflow-x:hidden;
-    }
-    .pitch{
-      position:fixed;inset:0;pointer-events:none;opacity:.13;
-      background:
-        linear-gradient(90deg,transparent 49.8%,#fff 50%,transparent 50.2%),
-        linear-gradient(#fff2 1px,transparent 1px);
-      background-size:100% 100%,100% 70px;
-    }
-    .wrap{width:min(1120px,calc(100% - 36px));margin:auto;position:relative}
-    header{height:78px;display:flex;align-items:center;justify-content:space-between}
-    .brand{font-size:27px;font-weight:950;letter-spacing:-1px}
-    .brand b{color:var(--green)}
-    .badge{font-size:11px;font-weight:900;letter-spacing:1.3px;color:var(--green2);border:1px solid var(--line);background:#0b1b12cc;border-radius:999px;padding:9px 13px}
-    main{display:grid;grid-template-columns:1.15fr .85fr;gap:58px;align-items:center;min-height:calc(100vh - 148px);padding:55px 0 85px}
-    .eyebrow{color:var(--green);font-size:12px;font-weight:950;letter-spacing:2px;margin-bottom:18px}
-    h1{font-size:clamp(52px,7.2vw,92px);line-height:.92;letter-spacing:-5px;margin:0 0 24px;max-width:780px}
-    h1 span{color:var(--green)}
-    .lead{font-size:18px;line-height:1.65;color:var(--muted);max-width:650px;margin:0 0 30px}
-    .chips{display:flex;flex-wrap:wrap;gap:9px}
-    .chip{padding:10px 13px;border-radius:11px;border:1px solid var(--line);background:#0a1710b8;color:#c7d6cb;font-size:12px;font-weight:800}
-    .card{
-      border:1px solid var(--line);background:linear-gradient(145deg,#10251a,#08140d);
-      border-radius:28px;padding:28px;box-shadow:0 30px 80px #0008;position:relative;overflow:hidden;
-    }
-    .card:before{content:"";position:absolute;width:210px;height:210px;border:1px solid #ffffff18;border-radius:50%;right:-85px;top:-60px}
-    .card:after{content:"";position:absolute;width:92px;height:92px;border:1px solid #ffffff18;border-radius:50%;right:-26px;top:-1px}
-    .live{display:inline-flex;gap:8px;align-items:center;font-size:10px;font-weight:950;letter-spacing:1.5px;color:#bfffcf}
-    .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 18px var(--green)}
-    .match{margin:29px 0 20px;padding:22px;border:1px solid #294835;border-radius:20px;background:#07130ccc}
-    .match small{display:block;color:#7f9887;font-size:10px;font-weight:900;letter-spacing:1.2px;margin-bottom:14px}
-    .teams{display:flex;align-items:center;justify-content:space-between;gap:15px}
-    .team{font-size:20px;font-weight:950}
-    .vs{font-size:11px;font-weight:900;color:#6f8776;border:1px solid #294835;padding:7px 8px;border-radius:8px}
-    .coming{margin-top:22px;padding-top:19px;border-top:1px solid #25402f;color:#9eb2a4;font-size:12px;line-height:1.6}
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inglaterra x República Tcheca | Futebol, Estatísticas e Palpites — Nós Passa</title>
+<meta name="description" content="Acompanhe Inglaterra x República Tcheca no Nós Passa: futebol, estatísticas, palpites, análise da partida e resenha entre amigos.">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<meta name="googlebot" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<meta name="theme-color" content="#07120d"><meta name="author" content="Nós Passa">
+<link rel="canonical" href="https://www.nospassa.com.br/">
+<link rel="alternate" hreflang="pt-BR" href="https://www.nospassa.com.br/">
+<link rel="alternate" hreflang="en" href="https://www.nospassa.com.br/en/">
+<link rel="alternate" hreflang="es" href="https://www.nospassa.com.br/es/">
+<link rel="alternate" hreflang="x-default" href="https://www.nospassa.com.br/en/">
+<link rel="sitemap" type="application/xml" href="https://www.nospassa.com.br/sitemap.xml">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Nós Passa"><meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Inglaterra x República Tcheca | Futebol, Estatísticas e Palpites — Nós Passa"><meta property="og:description" content="Acompanhe Inglaterra x República Tcheca no Nós Passa: futebol, estatísticas, palpites, análise da partida e resenha entre amigos."><meta property="og:url" content="https://www.nospassa.com.br/">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Inglaterra x República Tcheca | Futebol, Estatísticas e Palpites — Nós Passa"><meta name="twitter:description" content="Acompanhe Inglaterra x República Tcheca no Nós Passa: futebol, estatísticas, palpites, análise da partida e resenha entre amigos.">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://www.nospassa.com.br/#website","url":"https://www.nospassa.com.br/","name":"Nós Passa","inLanguage":["pt-BR","en","es"]},{"@type":"WebPage","@id":"https://www.nospassa.com.br/#webpage","url":"https://www.nospassa.com.br/","name":"Inglaterra x República Tcheca | Futebol, Estatísticas e Palpites — Nós Passa","description":"Acompanhe Inglaterra x República Tcheca no Nós Passa: futebol, estatísticas, palpites, análise da partida e resenha entre amigos.","isPartOf":{"@id":"https://www.nospassa.com.br/#website"},"about":[{"@type":"SportsTeam","name":"England national football team","sport":"Football"},{"@type":"SportsTeam","name":"Czech Republic national football team","sport":"Football"}]}]}</script>
+<style>
+    :root{--bg:#06100b;--panel:#0b1b12;--panel2:#10261a;--line:#25402f;--text:#f5f7f5;--muted:#9eb2a4;--green:#67e08c;--green2:#b8ffca}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    body{min-height:100vh;background:radial-gradient(circle at 50% -15%,#1b5532 0,transparent 38%),radial-gradient(circle at 90% 100%,#12341f 0,transparent 35%),var(--bg);overflow-x:hidden}
+    .pitch{position:fixed;inset:0;pointer-events:none;opacity:.13;background:linear-gradient(90deg,transparent 49.8%,#fff 50%,transparent 50.2%),linear-gradient(#fff2 1px,transparent 1px);background-size:100% 100%,100% 70px}
+    .wrap{width:min(1120px,calc(100% - 36px));margin:auto;position:relative}header{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+    .brand{font-size:27px;font-weight:950;letter-spacing:-1px}.brand b{color:var(--green)}.top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+    .badge,.lang{font-size:10px;font-weight:900;letter-spacing:1px;color:var(--green2);border:1px solid var(--line);background:#0b1b12cc;border-radius:999px;padding:9px 11px;text-decoration:none}.lang{color:#b8c9bd}
+    main{padding:55px 0 85px}.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:58px;align-items:center;min-height:540px}.eyebrow{color:var(--green);font-size:12px;font-weight:950;letter-spacing:2px;margin-bottom:18px}
+    h1{font-size:clamp(52px,7.2vw,92px);line-height:.92;letter-spacing:-5px;margin:0 0 24px;max-width:780px}h1 span{color:var(--green)}
+    .lead{font-size:18px;line-height:1.65;color:var(--muted);max-width:650px;margin:0 0 30px}.chips{display:flex;flex-wrap:wrap;gap:9px}.chip{padding:10px 13px;border-radius:11px;border:1px solid var(--line);background:#0a1710b8;color:#c7d6cb;font-size:12px;font-weight:800}
+    .card{border:1px solid var(--line);background:linear-gradient(145deg,#10251a,#08140d);border-radius:28px;padding:28px;box-shadow:0 30px 80px #0008;position:relative;overflow:hidden}.card:before{content:"";position:absolute;width:210px;height:210px;border:1px solid #ffffff18;border-radius:50%;right:-85px;top:-60px}.card:after{content:"";position:absolute;width:92px;height:92px;border:1px solid #ffffff18;border-radius:50%;right:-26px;top:-1px}
+    .live{display:inline-flex;gap:8px;align-items:center;font-size:10px;font-weight:950;letter-spacing:1.5px;color:#bfffcf}.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 18px var(--green)}
+    .match{margin:29px 0 20px;padding:22px;border:1px solid #294835;border-radius:20px;background:#07130ccc}.match small{display:block;color:#7f9887;font-size:10px;font-weight:900;letter-spacing:1.2px;margin-bottom:14px}.teams{display:flex;align-items:center;justify-content:space-between;gap:15px}.team{font-size:20px;font-weight:950}.vs{font-size:11px;font-weight:900;color:#6f8776;border:1px solid #294835;padding:7px 8px;border-radius:8px}.coming{margin-top:22px;padding-top:19px;border-top:1px solid #25402f;color:#9eb2a4;font-size:12px;line-height:1.6}
+    .seo{margin-top:38px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.seo article{border:1px solid #1f3829;background:#08150eaa;border-radius:16px;padding:18px}.seo h2{font-size:15px;margin:0 0 7px}.seo p{font-size:12px;line-height:1.6;color:#8fa493;margin:0}
     footer{border-top:1px solid #1d3225;padding:25px 0 35px;color:#657b6b;font-size:11px}
-    @media(max-width:800px){
-      header{height:66px}.brand{font-size:23px}.badge{font-size:9px;padding:8px 10px}
-      main{grid-template-columns:1fr;gap:32px;padding:45px 0 65px;min-height:auto}
-      h1{font-size:clamp(48px,15vw,72px);letter-spacing:-3px}
-      .lead{font-size:15px}.card{padding:20px;border-radius:21px}
-      .team{font-size:17px}
-    }
-  </style>
+    @media(max-width:800px){header{padding:10px 0}.brand{font-size:23px}.badge{display:none}.hero{grid-template-columns:1fr;gap:32px;min-height:auto}main{padding:40px 0 65px}h1{font-size:clamp(48px,15vw,72px);letter-spacing:-3px}.lead{font-size:15px}.card{padding:20px;border-radius:21px}.team{font-size:16px}.seo{grid-template-columns:1fr}}</style>
+<script defer src="/visitor-tracker.js"></script>
 </head>
-<body>
-  <div class="pitch"></div>
-  <div class="wrap">
-    <header>
-      <div class="brand">Nós <b>Passa</b></div>
-      <div class="badge">⚽ NOVA FASE</div>
-    </header>
-    <main>
-      <section>
-        <div class="eyebrow">FUTEBOL • ESTATÍSTICAS • RESENHA</div>
-        <h1>O futebol é melhor <span>entre amigos.</span></h1>
-        <p class="lead">Estamos preparando uma nova experiência focada no jogo que importa: partidas em destaque, números, palpites e aquela resenha que começa antes da bola rolar e só termina depois do apito final.</p>
-        <div class="chips">
-          <div class="chip">⚽ Jogo em destaque</div>
-          <div class="chip">📊 Estatísticas</div>
-          <div class="chip">🎯 Palpites</div>
-          <div class="chip">👥 Entre amigos</div>
-        </div>
-      </section>
-      <aside class="card">
-        <div class="live"><span class="dot"></span> EM PREPARAÇÃO</div>
-        <div class="match">
-          <small>O JOGO DO DIA</small>
-          <div class="teams">
-            <div class="team">INGLATERRA</div>
-            <div class="vs">VS</div>
-            <div class="team">REPÚBLICA TCHECA</div>
-          </div>
-        </div>
-        <div class="coming"><strong style="color:#edf7f0">Em breve.</strong><br>Uma página simples, rápida e feita para quem realmente gosta de acompanhar futebol junto.</div>
-      </aside>
-    </main>
-    <footer>© 2026 Nós Passa • Futebol entre amigos.</footer>
-  </div>
-</body>
-</html>
+<body><div class="pitch"></div><div class="wrap">
+<header><div class="brand">Nós <b>Passa</b></div><div class="top"><div class="badge">⚽ FOOTBALL</div><a class="lang" href="/">PT</a><a class="lang" href="/en/">EN</a><a class="lang" href="/es/">ES</a></div></header>
+<main><section class="hero"><div><div class="eyebrow">FUTEBOL • ESTATÍSTICAS • PALPITES</div><h1>O futebol é melhor <span>entre amigos.</span></h1><p class="lead">Uma experiência focada no jogo que importa: partidas em destaque, números, palpites e aquela resenha que começa antes da bola rolar e só termina depois do apito final.</p><div class="chips"><div class="chip">⚽ Futebol</div><div class="chip">📊 Estatísticas</div><div class="chip">🎯 Palpites</div><div class="chip">👥 Entre amigos</div></div></div>
+<aside class="card"><div class="live"><span class="dot"></span>JOGO EM DESTAQUE</div><div class="match"><small>INGLATERRA X REPÚBLICA TCHECA</small><div class="teams"><div class="team">INGLATERRA</div><div class="vs">VS</div><div class="team">REPÚBLICA TCHECA</div></div></div><div class="coming"><strong style="color:#edf7f0">Em preparação.</strong><br>Conteúdo do confronto, estatísticas e informações do jogo serão atualizados nesta página.</div></aside></section>
+<section class="seo"><article><h2>Inglaterra x República Tcheca</h2><p>Página dedicada ao confronto com informações e contexto para quem acompanha futebol internacional.</p></article><article><h2>Estatísticas de futebol</h2><p>Números e informações do jogo organizados de forma simples para acompanhar a partida.</p></article><article><h2>Palpites e discussão</h2><p>Um espaço pensado para previsões, opiniões e conversa entre torcedores antes e depois do jogo.</p></article></section></main>
+<footer>© 2026 Nós Passa • Futebol, estatísticas e palpites.</footer></div></body></html>
