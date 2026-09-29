@@ -17,7 +17,7 @@ noGames:'Nenhum jogo encontrado nesta data.',noLeague:'Não há jogos desta comp
 error:'Não foi possível carregar os jogos.',updated:'Atualização automática',local:'Seu país',dayComps:'Competições do dia',calendar:'Escolher data'
 };
 const $=id=>document.getElementById(id);
-const state={date:localISO(new Date()),filter:'all',leagueId:null,data:null,viewerCountry:null,viewerCountryName:null,localLeagues:[],loading:false};
+const state={date:localISO(new Date()),filter:'all',leagueId:null,data:null,viewerCountry:null,viewerCountryName:null,localLeagues:[],loading:false,liveMode:false,dailyData:null};
 function localISO(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+day}
 function addDays(iso,n){const [y,m,d]=iso.split('-').map(Number);const x=new Date(y,m-1,d+n,12,0,0);return localISO(x)}
 function parseDate(iso){const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d,12,0,0)}
@@ -31,7 +31,7 @@ function localizedCountry(code,fallback){try{return new Intl.DisplayNames([lang]
 function leagueName(l){const id=Number(l?.id||0);if(state.viewerCountry==='BR'){const br={71:'Brasileirão Série A',72:'Brasileirão Série B',75:'Série C',76:'Série D',73:'Copa do Brasil'};if(br[id])return br[id]}return l?.name||'—'}
 function teamUrl(t){const prefix=lang.startsWith('en')?'/en/':lang.startsWith('es')?'/es/':'/';return prefix+'team.html?id='+encodeURIComponent(t.id)+'&name='+encodeURIComponent(t.name||'')}
 function matchUrl(f){return '/match.html?id='+encodeURIComponent(f.id)+'&date='+encodeURIComponent(String(f.date||'').slice(0,10))}
-function renderDates(){const box=$('datebar');let html='<button class="navday" data-shift="-7" aria-label="Previous week">‹</button>';for(let i=-3;i<=10;i++){const d=addDays(state.date,i);html+='<button class="day '+(i===0?'active':'')+'" data-date="'+d+'"><strong>'+esc(relLabel(d))+'</strong><span>'+esc(dayNum(d))+'</span></button>'}html+='<button class="navday" data-shift="7" aria-label="Next week">›</button>';box.innerHTML=html;box.querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{state.date=b.dataset.date;state.leagueId=null;load()});box.querySelectorAll('[data-shift]').forEach(b=>b.onclick=()=>{state.date=addDays(state.date,Number(b.dataset.shift));state.leagueId=null;load()});$('date-picker').value=state.date}
+function renderDates(){const box=$('datebar');let html='<button class="navday" data-shift="-7" aria-label="Previous week">‹</button>';for(let i=-3;i<=10;i++){const d=addDays(state.date,i);html+='<button class="day '+(i===0?'active':'')+'" data-date="'+d+'"><strong>'+esc(relLabel(d))+'</strong><span>'+esc(dayNum(d))+'</span></button>'}html+='<button class="navday" data-shift="7" aria-label="Next week">›</button>';box.innerHTML=html;box.querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{state.liveMode=false;state.filter='all';setActiveFilter('all');state.date=b.dataset.date;state.leagueId=null;load()});box.querySelectorAll('[data-shift]').forEach(b=>b.onclick=()=>{state.liveMode=false;state.filter='all';setActiveFilter('all');state.date=addDays(state.date,Number(b.dataset.shift));state.leagueId=null;load()});$('date-picker').value=state.date}
 function filteredFixtures(){let a=state.data?.fixtures||[];if(state.filter!=='all')a=a.filter(f=>statusType(f.status?.short)===state.filter);if(state.leagueId)a=a.filter(f=>Number(f.league?.id)===Number(state.leagueId));return a}
 function groupsFor(fixtures){const m=new Map();fixtures.forEach(f=>{const k=(f.league?.country||'World')+'|'+(f.league?.id||0)+'|'+(f.league?.name||'Other');if(!m.has(k))m.set(k,{league:f.league,games:[]});m.get(k).games.push(f)});const localName=(state.viewerCountryName||'').toLowerCase();return [...m.values()].sort((a,b)=>{const al=(a.league?.country||'').toLowerCase()===localName?0:1;const bl=(b.league?.country||'').toLowerCase()===localName?0:1;return al-bl||(a.league?.country||'').localeCompare(b.league?.country||'')||(a.league?.name||'').localeCompare(b.league?.name||'')})}
 function selectLeague(id,btn){state.leagueId=id==='all'?null:Number(id);document.querySelectorAll('[data-league]').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');rerenderMainOnly()}
@@ -42,8 +42,43 @@ function rerenderMainOnly(){const fs=filteredFixtures(),groups=groupsFor(fs);$('
 function rerender(){renderSidebar(groupsFor(state.data?.fixtures||[]));rerenderMainOnly()}
 async function loadLocalLeagues(){if(!state.viewerCountry)return;try{const r=await fetch(CATALOG+'?action=leagues&country='+encodeURIComponent(state.viewerCountry));const d=await r.json();if(r.ok&&!d.error)state.localLeagues=(d.leagues||[]).slice(0,80)}catch(e){console.warn('local leagues',e)}}
 function updateStamp(d){const fetched=d?.fetched_at?new Date(d.fetched_at):new Date();let when='';try{when=new Intl.DateTimeFormat(lang,{hour:'2-digit',minute:'2-digit',hour12:false}).format(fetched)}catch{}const live=(d?.fixtures||[]).filter(f=>statusType(f.status?.short)==='live').length;$('source').innerHTML='<b>'+tr.updated+'</b> • '+esc(when)+(live?' • <span class="source-live"><span class="live-dot"></span>'+live+' '+tr.live+'</span>':'')}
-async function load(opts={}){if(state.loading)return;state.loading=true;renderDates();if(!opts.silent)$('games').innerHTML='<div class="loading"><div class="spinner"></div>'+tr.loading+'</div>';$('count').textContent='';try{const r=await fetch(FIXTURES+'?date='+encodeURIComponent(state.date),{cache:'no-store'});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||'HTTP '+r.status);const countryChanged=state.viewerCountry!==d.viewer_country;state.data=d;state.viewerCountry=d.viewer_country||state.viewerCountry||'BR';state.viewerCountryName=d.viewer_country_name||state.viewerCountryName||'Brazil';if(countryChanged||!state.localLeagues.length)await loadLocalLeagues();rerender();updateStamp(d)}catch(e){if(!opts.silent)$('games').innerHTML='<div class="error">'+tr.error+'</div>';console.error(e)}finally{state.loading=false}}
-document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.filter=b.dataset.filter;rerenderMainOnly()});
-$('filter-all').textContent=tr.all;$('filter-live').textContent=tr.live;$('filter-finished').textContent=tr.finished;$('filter-scheduled').textContent=tr.scheduled;$('date-picker').title=tr.calendar;$('date-picker').onchange=e=>{if(e.target.value){state.date=e.target.value;state.leagueId=null;load()}};$('today-btn').onclick=()=>{state.date=localISO(new Date());state.leagueId=null;load()};
-load();setInterval(()=>{if(state.date===localISO(new Date()))load({silent:true})},60000);
+function setActiveFilter(filter){
+  document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x.dataset.filter===filter));
+}
+async function loadLive(){
+  if(state.loading)return;
+  state.loading=true;
+  state.liveMode=true;
+  state.filter='live';
+  state.leagueId=null;
+  setActiveFilter('live');
+  $('games').innerHTML='<div class="loading"><div class="spinner"></div>'+tr.loading+'</div>';
+  $('count').textContent='';
+  try{
+    const r=await fetch(FIXTURES+'?live=all',{cache:'no-store'});
+    const d=await r.json();
+    if(!r.ok||d.error)throw new Error(d.error||'HTTP '+r.status);
+    state.data=d;
+    const groups=groupsFor(d.fixtures||[]);
+    renderSidebar(groups);
+    $('count').textContent=(d.fixtures||[]).length+' '+tr.games;
+    renderGames(groups);
+    updateStamp(d);
+  }catch(e){
+    $('games').innerHTML='<div class="error">'+tr.error+'<br><small>Live feed unavailable.</small></div>';
+    console.error(e);
+  }finally{state.loading=false}
+}
+async function load(opts={}){if(state.loading)return;state.loading=true;renderDates();if(!opts.silent)$('games').innerHTML='<div class="loading"><div class="spinner"></div>'+tr.loading+'</div>';$('count').textContent='';try{const r=await fetch(FIXTURES+'?date='+encodeURIComponent(state.date),{cache:'no-store'});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||'HTTP '+r.status);const countryChanged=state.viewerCountry!==d.viewer_country;state.data=d;state.dailyData=d;state.liveMode=false;state.viewerCountry=d.viewer_country||state.viewerCountry||'BR';state.viewerCountryName=d.viewer_country_name||state.viewerCountryName||'Brazil';if(countryChanged||!state.localLeagues.length)await loadLocalLeagues();rerender();updateStamp(d)}catch(e){if(!opts.silent)$('games').innerHTML='<div class="error">'+tr.error+'</div>';console.error(e)}finally{state.loading=false}}
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{
+  const filter=b.dataset.filter;
+  if(filter==='live'){loadLive();return}
+  state.liveMode=false;
+  state.filter=filter;
+  setActiveFilter(filter);
+  if(state.dailyData)state.data=state.dailyData;
+  rerender();
+});
+$('filter-all').textContent=tr.all;$('filter-live').textContent=tr.live;$('filter-finished').textContent=tr.finished;$('filter-scheduled').textContent=tr.scheduled;$('date-picker').title=tr.calendar;$('date-picker').onchange=e=>{if(e.target.value){state.liveMode=false;state.filter='all';setActiveFilter('all');state.date=e.target.value;state.leagueId=null;load()}};$('today-btn').onclick=()=>{state.liveMode=false;state.filter='all';setActiveFilter('all');state.date=localISO(new Date());state.leagueId=null;load()};
+load();setInterval(()=>{if(state.liveMode)loadLive();else if(state.date===localISO(new Date()))load({silent:true})},60000);
 })();
