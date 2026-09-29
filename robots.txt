@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+Disallow: /trafego.html
+Sitemap: https://www.nospassa.com.br/sitemap.xml
