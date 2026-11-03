@@ -47,3 +47,8 @@
 .personal-footnote a{color:#66e5c6;font-weight:700}
 @media(max-width:940px){.personal-head{align-items:flex-start;flex-direction:column}.personal-top-actions{justify-content:flex-start}.personal-wallets{grid-template-columns:1fr}}
 @media(max-width:590px){.personal-dashboard{margin-top:-25px}.personal-top-actions{width:100%}.personal-top-actions>*{flex:1;text-align:center;padding:10px 8px}.personal-summary{grid-template-columns:1fr 1fr}.personal-kpi:last-child{grid-column:1/-1}.personal-wallet-head h3{font-size:16px}.personal-wallet-balance>strong{font-size:23px}}
+
+.personal-shortcut{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;margin:13px 0 -16px;background:#102a2f;border:1px solid #2d7168;border-radius:999px;color:#92efd8;font-size:11px;font-weight:700;transition:background .2s}
+.personal-shortcut strong{color:#e2fff5}.personal-shortcut:hover{background:#16463f}
+.personal-data-warning{color:#ffca94;font-size:10px;padding:0 19px 11px;display:block}
+.personal-wallet-txs>small{font-size:11px;color:#839eb2}
