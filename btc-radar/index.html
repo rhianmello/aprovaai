@@ -4,11 +4,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#070b15">
 <title>ChainWatch — Radar de Bitcoin | Movimentações on-chain</title>
-<meta name="description" content="Acompanhe 19 endereços de Bitcoin ligados ao ataque à Binance em 2026. Consulta on-chain programada a cada 10 segundos, com eventos auditáveis.">
+<meta name="description" content="Acompanhe 19 endereços de Bitcoin ligados ao ataque à Binance em 2026. Painel público atualizado a cada 10 segundos, com consultas à blockchain conforme disponibilidade, com eventos auditáveis.">
 <meta property="og:type" content="website"><meta property="og:title" content="ChainWatch — Radar BTC"><meta property="og:description" content="Rastreamento público de movimentações em 19 carteiras de Bitcoin. Dados on-chain com origem verificável.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./personal.css">
 </head>
 <body>
 <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -16,7 +17,7 @@
 <header class="site-header container">
   <a class="logo" href="#inicio" aria-label="ChainWatch início"><span class="logo-symbol">◈</span> CHAIN<span>WATCH</span><small>BTC INTELLIGENCE</small></a>
   <nav aria-label="Navegação"><a href="#radar">Monitor ao vivo</a><a href="#entenda">Como funciona</a><a href="#planos">Planos</a></nav>
-  <a class="nav-cta" href="./conta.html">Entrar / Criar conta <span>↗</span></a>
+  <a class="nav-cta" id="accountNavLink" href="./conta.html">Entrar / Criar conta <span>↗</span></a>
 </header>
 <main>
 <section class="hero container" id="inicio">
@@ -25,7 +26,7 @@
     <h1>O blockchain não dorme. <span>Seu radar também não.</span></h1>
     <p>Acompanhe os <strong>19 endereços de Bitcoin</strong> relacionados ao ataque de outubro de 2026. Cada movimentação de saída é registrada, com transação verificável no explorador.</p>
     <div class="hero-actions"><a class="btn btn-primary" href="#radar">Explorar movimentações <span>↗</span></a><a class="btn btn-ghost" href="#entenda">Entenda o monitoramento <span>→</span></a><a class="btn btn-ghost" href="./conta.html">Salvar minhas carteiras <span>→</span></a></div>
-    <div class="hero-trust"><span>◉ Monitoramento agendado a cada 10 segundos</span><span>◉ Fontes on-chain verificáveis</span><span>◉ Dados públicos</span></div>
+    <div class="hero-trust"><span>◉ Painel: 10 s · blockchain: a cada 2 min</span><span>◉ Fontes on-chain verificáveis</span><span>◉ Dados públicos</span></div>
   </div>
   <div class="hero-art" aria-label="Visualização ilustrativa do radar de transações">
     <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
@@ -44,6 +45,32 @@
  <div class="metric"><div class="metric-title">ENDEREÇOS MONITORADOS <span>◈</span></div><strong id="walletCount">19</strong><small>Carteiras públicas rastreadas</small></div>
  <div class="metric"><div class="metric-title">SAÍDAS DETECTADAS <span>↗</span></div><strong id="eventCount">—</strong><small>Eventos conhecidos pelo rastreador</small></div>
  <div class="metric"><div class="metric-title">ÚLTIMA CHECAGEM <span>◷</span></div><strong class="small-metric" id="lastCheck">Aguardando</strong><small id="checkDetail">Conectando ao monitor</small></div>
+</section>
+
+<section id="meu-radar" class="personal-dashboard container" hidden aria-labelledby="myRadarTitle">
+ <div class="personal-head">
+  <div><div class="section-kicker">MINHA ÁREA · CONTA CONECTADA</div>
+   <h2 id="myRadarTitle">Meu <span>ChainWatch</span></h2>
+   <p id="personalGreeting">Carregando suas carteiras...</p>
+  </div>
+  <div class="personal-top-actions">
+   <a href="./conta.html" class="outline-button">+ Gerenciar carteiras</a>
+   <button id="personalRefresh" class="outline-button" type="button">↻ Consultar saldos</button>
+   <button id="personalLogout" class="outline-button" type="button">Sair</button>
+  </div>
+ </div>
+ <div class="personal-notice"><span>◈</span>
+  <div><strong>Acompanhamento dos seus endereços públicos</strong>
+  <p>Os saldos e o histórico são consultados sob demanda e podem estar em cache por até 5 minutos. Ainda não há alertas automáticos nem monitoramento contínuo de carteiras pessoais. Um endereço público não comprova propriedade dos BTC.</p></div>
+ </div>
+ <div class="personal-summary">
+   <div class="personal-kpi"><span>CARTEIRAS CADASTRADAS</span><strong id="personalCount">—</strong><small>Endereços da sua conta</small></div>
+   <div class="personal-kpi"><span>SALDO TOTAL CONSULTADO</span><strong id="personalTotal">—</strong><small id="personalCompleteness">Aguardando verificação</small></div>
+   <div class="personal-kpi"><span>CONSULTAS COM DADOS</span><strong id="personalChecked">—</strong><small>Sucesso ou cache disponível</small></div>
+ </div>
+ <p id="personalStatus" class="personal-feedback" role="status">Buscando seus endereços cadastrados...</p>
+ <div id="personalWallets" class="personal-wallets" aria-live="polite"></div>
+ <div class="personal-footnote"><span>Dados: mempool.space / Blockstream · Somente blockchain Bitcoin</span><a href="#radar">Ver radar público Binance ↓</a></div>
 </section>
 
 <section class="monitor-section container" id="radar">
@@ -79,7 +106,7 @@
 <section class="plans-section" id="planos"><div class="container">
  <div class="section-intro center"><div><div class="section-kicker">03 / ACESSO</div><h2>Inteligência para cada perfil.</h2><p>O painel público é gratuito. Os planos pagos abaixo são uma proposta futura — ainda não estão à venda.</p></div></div>
  <div class="plans">
- <article class="plan"><span class="plan-title">EXPLORADOR</span><h3>Gratuito</h3><div class="price">R$ 0 <small>/mês</small></div><p>Para acompanhar o caso publicamente.</p><ul><li>19 endereços</li><li>Saldo e histórico</li><li>Verificações a cada 10 segundos</li><li>Links dos exploradores</li></ul><a href="#radar" class="btn btn-plan">Usar gratuitamente ↗</a></article>
+ <article class="plan"><span class="plan-title">EXPLORADOR</span><h3>Gratuito</h3><div class="price">R$ 0 <small>/mês</small></div><p>Para acompanhar o caso publicamente.</p><ul><li>19 endereços</li><li>Saldo e histórico</li><li>Painel atualizado a cada 10 segundos</li><li>Links dos exploradores</li></ul><a href="#radar" class="btn btn-plan">Usar gratuitamente ↗</a></article>
  <article class="plan featured"><div class="ribbon">PROPOSTA</div><span class="plan-title">INVESTIDOR</span><h3>Pro</h3><div class="price">R$ 19,90 <small>/mês</small></div><p>Para quem precisa de alertas mais avançados.</p><ul><li>Tudo do gratuito</li><li>Alertas por e-mail e Telegram</li><li>Filtros por valor</li><li>Histórico ampliado</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
  <article class="plan"><span class="plan-title">INTELLIGENCE</span><h3>Advanced</h3><div class="price">R$ 49,90 <small>/mês</small></div><p>Para análise contínua de movimentações.</p><ul><li>Tudo do Pro</li><li>Carteiras personalizadas</li><li>Exportação de relatórios</li><li>Alertas e regras avançadas</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
  </div>
@@ -104,5 +131,6 @@
 </main>
 <footer><div class="container footer-in"><div class="logo"><span class="logo-symbol">◈</span> CHAIN<span>WATCH</span><small>RADAR BTC · 2026</small></div><p>Projeto independente, para fins informativos. Não associado à Binance, ao FBI nem a empresas de análise forense. Nada aqui constitui aconselhamento financeiro.</p><a href="#inicio">Voltar ao topo ↑</a></div></footer>
 <script src="./app.js" defer></script>
+<script type="module" src="./personal.js"></script>
 </body>
 </html>
