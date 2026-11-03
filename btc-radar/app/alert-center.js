@@ -5,7 +5,7 @@ const MAX_BTC=21000000;
 const txt=(s)=>String(s??"");
 const safe=s=>txt(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let config={email_ready:false,telegram_ready:false,telegram_bot_username:null};
-let prefs=null,wallets=[],busy=false,lastLoaded=0;
+let prefs=null,wallets=[],busy=false,lastLoaded=0,scanInfo=new Map();
 const localDate=t=>{
  const d=new Date(t||"");
  return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat("pt-BR",{timeZone:"America/Sao_Paulo",dateStyle:"short",timeStyle:"short"}).format(d);
@@ -48,6 +48,11 @@ async function loadWallets(){
  if(error)throw error;
  wallets=data||[];
 }
+async function loadScanInfo(){
+ const {data,error}=await sb.rpc("chainwatch_my_scan_status");
+ if(error){scanInfo=new Map();return;}
+ scanInfo=new Map((data||[]).map(r=>[r.wallet_id,r]));
+}
 function renderSettings(){
  const ready=config.email_ready||config.telegram_ready;
  $("alertGlobalToggle").checked=!!prefs?.enabled;
@@ -88,7 +93,15 @@ function renderWalletList(){
   const addr=document.createElement("small");addr.textContent=w.address.slice(0,17)+"…"+w.address.slice(-12);
   const state=document.createElement("em");
   state.textContent=w.monitor_enabled?"Selecionada":"Desativada";
-  content.append(name,addr);line.append(input,content,state);
+  const scan=document.createElement("small");
+  const info=scanInfo.get(w.id);
+  scan.textContent=!w.monitor_enabled?"Monitoramento desligado":
+   !prefs?.enabled?"Aguardando ativação global":
+   !config.email_ready&&!config.telegram_ready?"Aguardando configuração dos canais":
+   info?.last_error?"Última varredura com falha":
+   info?.last_checked_at?"Última varredura: "+localDate(info.last_checked_at):
+   "Aguardando primeira varredura";
+  content.append(name,addr,scan);line.append(input,content,state);
   input.addEventListener("change",async()=>{
    const desired=input.checked;
    input.disabled=true;
@@ -129,7 +142,7 @@ async function loadAll(force=false){
  try{
   const {data}=await sb.auth.getSession();
   if(!data?.session?.user)return;
-  await Promise.all([loadProvider(),loadPrefs(),loadWallets()]);
+  await Promise.all([loadProvider(),loadPrefs(),loadWallets(),loadScanInfo()]);
   renderSettings();renderWalletList();await loadDeliveries();
   lastLoaded=Date.now();
  }catch(e){status("Falha ao carregar as preferências. Confira a sessão e tente novamente.",true);}
