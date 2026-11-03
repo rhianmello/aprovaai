@@ -21,6 +21,7 @@ function page(name){
  if(location.hash!=="#"+name)history.pushState(null,"","#"+name);
  if(name==="wallets")drawWallets();if(name==="history")drawHistory();if(name==="binance")loadPublic();
  if(name==="settings")$("settingsEmail").textContent=user?.email||"—";
+ window.dispatchEvent(new CustomEvent("chainwatch:view",{detail:{name}}));
  window.scrollTo(0,0);
 }
 function totals(){
@@ -246,3 +247,5 @@ else{
  page(location.hash.slice(1)||"overview");
  await reload();
 }
+
+export {sb};
