@@ -52,3 +52,12 @@
 .personal-shortcut strong{color:#e2fff5}.personal-shortcut:hover{background:#16463f}
 .personal-data-warning{color:#ffca94;font-size:10px;padding:0 19px 11px;display:block}
 .personal-wallet-txs>small{font-size:11px;color:#839eb2}
+
+.online-counter{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;border:1px solid #2e7465;border-radius:10px;padding:9px 11px;background:#0f2b2c;color:#acf9df;font-size:11px;font-weight:700}
+.online-counter i{width:7px;height:7px;border-radius:50%;background:#43e9bd;box-shadow:0 0 10px #43e9bd}
+.online-counter strong{font:800 13px 'Space Grotesk',sans-serif;color:#f3fff9;font-variant-numeric:tabular-nums}
+.online-counter.offline{color:#a1b1c1;border-color:#374c5a;background:#13202b}
+.online-counter.offline i{background:#7b90a6;box-shadow:none}
+@media(max-width:950px){.site-header nav{display:none}.site-header{gap:8px}}
+@media(max-width:550px){.online-counter{font-size:10px;padding:7px;gap:4px}.online-counter span{display:none}.site-header .logo small{display:none}}
+@media(max-width:530px){.header-inner .online-counter{padding:6px 7px}.back-link{font-size:10px}}
