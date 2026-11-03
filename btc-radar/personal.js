@@ -57,7 +57,7 @@ function reset(){
 async function inspect(item,gen,accessToken){
  try{
   const url=BASE+"/functions/v1/chainwatch-wallet-info?wallet_id="+encodeURIComponent(item.wallet.id);
-  const res=await fetch(url,{headers:{Authorization:"Bearer "+accessToken,Accept:"application/json"},cache:"no-store",signal:AbortSignal.timeout(30000)});
+  const res=await fetch(url,{headers:{Authorization:"Bearer "+accessToken,"x-chainwatch-session":"Bearer "+accessToken,apikey:"sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d",Accept:"application/json"},cache:"no-store",signal:AbortSignal.timeout(30000)});
   const data=await res.json();
   if(gen!==generation)return;
   if(!res.ok||!data.ok||data.wallet_id!==item.wallet.id)throw Error(data.error||"Resposta inválida");
