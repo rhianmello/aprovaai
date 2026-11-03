@@ -156,6 +156,7 @@ async function saveSettings(){
  if(enabled&&(!config.email_ready&&!config.telegram_ready)){
   return status("Ativação indisponível: ainda faltam configurar os provedores de notificação.",true);
  }
+ if(enabled&&!wallets.some(w=>w.monitor_enabled))return status("Selecione pelo menos uma carteira para receber alertas.",true);
  if(enabled&&!(email&&config.email_ready||telegram&&config.telegram_ready&&prefs.telegram_chat_id)){
   return status("Ative ao menos um canal disponível antes de ligar o monitoramento.",true);
  }
