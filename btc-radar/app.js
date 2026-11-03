@@ -21,7 +21,7 @@ function renderWallets(){
  if(!filtered.length){body.innerHTML='<tr><td colspan="6" class="loading">'+(wallets.length?"Nenhum endereço corresponde à busca.":"Endereços indisponíveis.")+"</td></tr>";return;}
  body.innerHTML=filtered.map(w=>{
   const spent=Number(w.confirmed_spent_sat||0)+Number(w.mempool_spent_sat||0);
-  const state=!w.last_checked_at?badge("Aguardando","pending"):w.last_error?badge("Falha de consulta","pending"):spent>0?badge("Com saída","bad"):badge("Sem saída","ok");
+  const state=!w.last_checked_at?badge("Aguardando","pending"):w.last_error?badge("API limitada (429)","pending"):spent>0?badge("Com saída","bad"):badge("Sem saída","ok");
   return '<tr><td>'+w.wallet_no+'</td><td><span class="address" title="'+safe(w.address)+'">'+safe(short(w.address))+
   '</span><button class="copy-btn" type="button" data-copy="'+safe(w.address)+'" title="Copiar endereço" aria-label="Copiar carteira '+w.wallet_no+'">⧉</button></td>'+
   '<td class="value-btc">'+pt.format(Number(w.original_btc))+' BTC</td><td class="value-btc">'+formatSat(w.balance_sat)+'</td>'+
@@ -56,7 +56,7 @@ function updateUI(data){
  $("checkDetail").textContent=run&&run.finished_at?run.checked+"/19 carteiras consultadas · "+(run.errors||0)+" falhas":"Monitor inicializando";
  $("terminalStatus").textContent=run&&run.finished_at?"Última execução: "+when(run.finished_at):"Sem verificação concluída";
  const delaySeconds=run&&run.finished_at?Math.floor((Date.now()-new Date(run.finished_at).getTime())/1000):Infinity;
- const delayed=delaySeconds>30;
+ const delayed=delaySeconds>180;
  $("syncChip").classList.toggle("warn",!checkFinished||run.errors>0||delayed);
  $("syncText").textContent=!run?"Aguardando primeira varredura":!run.finished_at?"Processando":run.errors>0?"Verificação parcial":delayed?"Dados atrasados":"Dados consultados";
  if(!run||!run.finished_at)notice("A varredura está inicializando. Os saldos e estados só aparecem depois de uma consulta concluída.");
