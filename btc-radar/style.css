@@ -20,3 +20,16 @@ footer{border-top:1px solid #25394e;background:#07101e}.footer-in{padding-top:35
 
 .waitlist{margin:35px auto 0;max-width:1050px;padding:25px 27px;border-radius:17px;border:1px solid #2c726d;background:linear-gradient(110deg,#102f32,#0c1c2c);display:grid;grid-template-columns:1fr 1.15fr;gap:27px;align-items:center}.waitlist-description h3{font:700 23px/1.25 'Space Grotesk',sans-serif;letter-spacing:-.035em;margin:12px 0}.waitlist-description p{font-size:12px;color:#a1b7c4;line-height:1.75;max-width:400px}.waitlist-form{display:grid;gap:12px}.waitlist-fields{display:flex;gap:9px}.waitlist-fields label{display:grid;flex:1;gap:6px;min-width:0}.waitlist-fields label:first-child{flex:1.4}.waitlist-fields label>span{font-size:10px;color:#9ebcbf;font-weight:700}.waitlist-fields input,.waitlist-fields select{width:100%;background:#091624;border:1px solid #3c6470;border-radius:8px;color:#edf6ff;padding:12px 10px;font-size:12px;min-width:0}.waitlist-fields input::placeholder{color:#607b8c}.consent{display:flex;gap:9px;align-items:flex-start;font-size:10px;color:#a8c1c5;line-height:1.5}.consent input{accent-color:#43e9bd;margin-top:2px}.waitlist-form button{justify-self:start}.waitlist-status{font-size:11px;color:#71edca;min-height:16px;margin:0}.waitlist-status.error{color:#ffb1bc}
 @media(max-width:780px){.waitlist{grid-template-columns:1fr}.waitlist-fields{flex-wrap:wrap}.waitlist-fields label{min-width:180px}}
+
+/* Commercial landing additions */
+.sell-strip{margin:8px auto 22px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:22px 24px;border:1px solid #2d7e70;border-radius:14px;background:linear-gradient(105deg,#12362f,#0d2130 72%);box-shadow:0 18px 55px #0003}
+.sell-strip-copy{display:grid;justify-items:start;gap:6px}.sell-pill{font-size:9px;letter-spacing:.13em;background:#1b5644;color:#9dffe1;border-radius:7px;padding:5px 8px;font-weight:800}
+.sell-strip-copy strong{font:700 clamp(15px,1.6vw,21px)/1.25 'Space Grotesk',sans-serif;max-width:610px;letter-spacing:-.02em}
+.sell-strip-copy small{font-size:11px;color:#9cb9bb;line-height:1.65}.sell-strip-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:end}.sell-strip-actions .btn{padding:12px 14px;gap:10px}
+.faq-section{padding:70px 0 80px}.faq-section h2{font:700 clamp(28px,3.4vw,40px)/1.16 'Space Grotesk',sans-serif;letter-spacing:-.045em;margin:14px 0 27px}.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.faq-grid details{background:#0f1c2b;border:1px solid #2a4152;border-radius:12px;padding:17px 19px}.faq-grid details[open]{border-color:#397b71}
+.faq-grid summary{cursor:pointer;font-size:12px;font-weight:800;color:#e0f1f6;list-style-position:outside}
+.faq-grid summary::marker{color:#43e9bd}.faq-grid p{font-size:11px;color:#95b4c2;line-height:1.8;margin:13px 0 0}
+#lista-de-interesse{scroll-margin-top:30px}
+@media(max-width:900px){.sell-strip{flex-direction:column;align-items:start}.sell-strip-actions{justify-content:start}}
+@media(max-width:620px){.faq-grid{grid-template-columns:1fr}.sell-strip{padding:18px}.sell-strip-actions{width:100%}.sell-strip-actions .btn{flex:1;min-width:155px}.hero-actions .btn{flex:1}}
