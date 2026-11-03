@@ -58,9 +58,9 @@ function updateUI(data){
  const delaySeconds=run&&run.finished_at?Math.floor((Date.now()-new Date(run.finished_at).getTime())/1000):Infinity;
  const delayed=delaySeconds>180;
  $("syncChip").classList.toggle("warn",!checkFinished||run.errors>0||delayed);
- $("syncText").textContent=!run?"Aguardando primeira varredura":!run.finished_at?"Processando":run.errors>0?"Verificação parcial":delayed?"Dados atrasados":"Dados consultados";
+ $("syncText").textContent=!run?"Aguardando primeira varredura":!run.finished_at?"Processando":run.errors>0?"API limitada":delayed?"Dados atrasados":"Dados consultados";
  if(!run||!run.finished_at)notice("A varredura está inicializando. Os saldos e estados só aparecem depois de uma consulta concluída.");
- else if(run.errors)notice("Verificação parcial: "+run.checked+" de 19 carteiras consultadas. "+run.errors+" falha(s). Não é possível garantir ausência de saídas.",true);
+ else if(run.errors)notice("Exploradores responderam HTTP 429. Reduzimos as consultas para dar tempo de recuperação; os dados podem estar desatualizados.",true);
  else if(delayed)notice("Última consulta concluída há "+delaySeconds+" segundos. O sistema pode estar aguardando resposta dos exploradores. Não interprete este painel como um estado em tempo real.",true);
  else notice("Última execução concluída em "+when(run.finished_at)+". Dados da blockchain podem sofrer atraso ou reorganização.");
  renderWallets();renderEvents();
@@ -150,3 +150,6 @@ $("waitlistForm").addEventListener("submit",async function(ev){
  }catch(err){status.textContent="Não foi possível registrar: "+String(err.message||err);status.classList.add("error")}
  finally{submit.disabled=false}
 });
+
+// Clarify that UI refresh and blockchain scans have different frequencies.
+try { const hint=document.querySelector(".hero-trust span"); if(hint)hint.textContent="◉ Painel: 10 s · Blockchain: até 2 min"; const plan=document.querySelector(".plans .plan li:nth-child(3)");if(plan)plan.textContent="Painel atualizado a cada 10 segundos";}catch(_){ }
