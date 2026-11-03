@@ -55,6 +55,7 @@ async function applySession(session){
     return;
   }
   currentUser=user;
+  delete status.dataset.keep;
   $("welcome").textContent=user.email||"Conta autenticada";
   view("account");
   if(!status.dataset.keep)notify("Sua conta está conectada. As carteiras ficam visíveis apenas para você.");
