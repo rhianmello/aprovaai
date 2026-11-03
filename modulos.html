@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07140d">
+<meta name="robots" content="noindex,follow">
+<title>Central de Projetos | Nós Passa</title>
+<meta name="description" content="Acesso organizado aos sites e projetos digitais: Nós Passa, XRMOVI, ChainWatch, EPC-15 e outros projetos.">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<style>
+:root{color-scheme:dark;--bg:#06100b;--surface:#091a11;--surface2:#0d2117;--line:#1d4630;--muted:#91ac98;--text:#f2fff5;--green:#62e38d;--teal:#56e0c1;--amber:#ffd180;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 830px 510px at 78% -13%,#164d2e 0,transparent 72%),radial-gradient(ellipse 640px 400px at 5% 60%,#10322440 0,transparent 78%),var(--bg);color:var(--text)}
+a{color:inherit;text-decoration:none}button,input{font:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--green);outline-offset:4px}[hidden]{display:none!important}
+header{position:sticky;top:0;z-index:5;border-bottom:1px solid #21432e;background:#07130cde;backdrop-filter:blur(16px)}
+.header-inner{max-width:1450px;margin:auto;padding:15px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:inline-flex;align-items:center;gap:10px;font-size:21px;font-weight:950;letter-spacing:-.07em;white-space:nowrap}
+.brand-icon{width:35px;height:35px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,#62e38d,#19ab78);color:#072014;font-size:22px;letter-spacing:0;box-shadow:0 6px 24px #27aa7140}
+.brand b{color:var(--green)}.brand small{display:block;font-size:9px;letter-spacing:.2em;color:#799783;font-weight:900;margin-top:0}
+nav{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+nav a{display:inline-flex;align-items:center;gap:8px;border:1px solid #245037;background:#0c1e14;border-radius:9px;padding:10px 14px;font-size:11px;font-weight:800;color:#c9e3d1;white-space:nowrap}
+nav a:hover,nav a[aria-current]{color:#fff;border-color:var(--green);background:#143824}
+nav a.admin{border-color:#49735c;color:#d9fbe3}
+.wrap{max-width:1450px;margin:auto;padding:0 32px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:end;padding-top:62px;padding-bottom:32px}
+.eyebrow{display:flex;align-items:center;gap:10px;color:var(--green);font-size:10px;font-weight:900;letter-spacing:.18em;margin:0 0 14px}
+.eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px #3ff495}
+h1{font-size:clamp(34px,4.6vw,62px);font-weight:900;line-height:1.06;letter-spacing:-.055em;margin:0 0 17px}
+h1 span{color:var(--green)}
+.lead{color:#a0b8a8;font-size:14px;line-height:1.8;max-width:710px;margin:0}
+.hero-stats{display:flex;gap:11px;flex-wrap:wrap;justify-content:end}
+.stat{min-width:145px;border:1px solid #2b6343;border-radius:14px;background:linear-gradient(150deg,#123623,#0b1c13);padding:17px 19px}
+.stat strong{font-weight:900;font-size:27px;letter-spacing:-.05em;line-height:1;display:block}
+.stat span{font-size:9px;letter-spacing:.09em;color:#91b59e;display:block;font-weight:800;margin-top:9px}
+.tools{border:1px solid #244e34;background:#0a1b13;border-radius:15px;display:flex;align-items:center;gap:14px;padding:14px 16px;flex-wrap:wrap}
+.search{flex:1 1 280px;display:flex;align-items:center;gap:11px;padding:0 14px;border-radius:10px;min-height:45px;border:1px solid #2e6343;background:#060f09}
+.search svg{color:#70b989;flex-shrink:0}.search input{width:100%;border:0;outline:none;background:transparent;color:#ecfff3;font-size:13px}.search input::placeholder{color:#739582}
+.clear{display:none;border:0;background:#173723;border-radius:5px;padding:4px 9px;color:#b5e1c6;font-size:12px}.clear.visible{display:block}
+.filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.filter{border:1px solid #28523a;background:#0b1b13;border-radius:8px;color:#a5c5ad;font-size:11px;font-weight:800;padding:11px 12px}
+.filter:hover,.filter.active{border-color:var(--green);background:#193f29;color:#caffdc}.filter.active{box-shadow:inset 0 0 0 1px #419d66}
+.result-line{display:flex;align-items:center;justify-content:space-between;color:#7f9e8c;font-size:11px;margin:16px 2px 0;gap:20px}
+.result-line b{color:#bcf4cc}.result-line .hint{color:#6d907a}
+section.group{margin-top:43px}section.group>header{position:static;background:none;backdrop-filter:none;border:0;padding:0;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:19px;padding-bottom:14px;border-bottom:1px solid #224431}
+.group-title{display:flex;align-items:center;gap:12px}.group-title i{width:8px;height:28px;border-radius:3px;background:var(--section-color,var(--green))}
+.group h2{font-size:19px;margin:0;letter-spacing:-.035em;font-weight:850}.group p{font-size:11px;margin:6px 0 0;color:#85a390}.group-count{font-size:11px;font-weight:800;color:#71987c}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.card{min-width:0;display:flex;flex-direction:column;min-height:244px;padding:21px;border:1px solid #264a34;border-radius:15px;background:linear-gradient(155deg,#112b1c,#0b1a12 68%);transition:border-color .2s,transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.card:before{content:"";pointer-events:none;position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:.8}
+.card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 20px 45px #0005}
+.card-top{display:flex;align-items:start;justify-content:space-between;gap:8px}
+.icon{height:47px;width:47px;border-radius:12px;background:color-mix(in srgb,var(--accent) 17%,#0b1b13);border:1px solid color-mix(in srgb,var(--accent) 53%,#20352b);display:grid;place-items:center;color:var(--accent);font-size:24px;font-weight:900}
+.tag{font-size:9px;color:#acbdb0;border:1px solid #34543e;background:#0b1a12;padding:5px 8px;border-radius:999px;white-space:nowrap;font-weight:800}
+.tag.login{color:var(--amber);border-color:#715b35}.card h3{font-size:17px;line-height:1.25;letter-spacing:-.02em;margin:21px 0 9px}
+.card p{font-size:12px;line-height:1.68;color:#99b4a1;margin:0 0 21px;flex:1}
+.card-bottom{border-top:1px solid #294532;padding-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.url{font-size:10px;color:#75a686;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link-arrow{flex-shrink:0;font-size:18px;color:var(--accent);font-weight:900}
+.empty{border:1px dashed #355b40;border-radius:15px;margin:40px 0;padding:50px 20px;text-align:center;color:#a1bbaa;background:#0a1b11}
+.empty h3{margin:0 0 9px;color:#e4ffec}.empty p{margin:0 0 18px;font-size:12px}
+.empty button{border:1px solid #5ab37b;background:#1b432a;color:#dcffe8;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:800}
+.note{display:flex;align-items:center;gap:16px;margin:54px 0 54px;padding:21px;border:1px solid #2d6847;border-radius:14px;background:linear-gradient(110deg,#153a27,#0d2017)}
+.note-icon{font-size:30px}.note strong{display:block;font-size:13px}.note p{color:#9eb8a4;margin:5px 0 0;font-size:11px;line-height:1.8}
+footer{border-top:1px solid #21402d;color:#708f7a;font-size:11px;padding:24px 0;margin-top:15px}
+footer .wrap{display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap}
+footer a{color:#8be5a7;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:1190px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{grid-template-columns:1fr}.hero-stats{justify-content:start}}
+@media(max-width:820px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.header-inner{padding:15px 20px}.wrap{padding:0 20px}.hero{padding-top:40px}.tools{align-items:stretch}.filters{justify-content:flex-start}.search{flex:1 0 100%}.hero-stats{width:100%}.stat{flex:1}}
+@media(max-width:550px){.grid{grid-template-columns:1fr}.wrap{padding:0 16px}.header-inner{padding:13px 16px;align-items:flex-start;flex-direction:column}.brand{font-size:19px}.hero{padding-top:35px;padding-bottom:25px}.hero-stats{gap:8px}.stat{padding:14px 12px;min-width:0}.stat strong{font-size:23px}.stat span{font-size:8px}.card{min-height:198px}.filters .filter{font-size:10px;padding:10px}.result-line{font-size:10px}.group h2{font-size:18px}.note{align-items:start;padding:17px}.header-inner nav{width:100%}.header-inner nav a{flex:1;justify-content:center}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.card{transition:none}.card:hover{transform:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="/admin-access.js" defer></script>
+</head>
+<body>
+<header><div class="header-inner"><a class="brand" href="/" aria-label="Nós Passa — página principal"><span class="brand-icon">◈</span><span>Nós <b>Passa</b><small>ECOSSISTEMA DIGITAL</small></span></a>
+<nav aria-label="Navegação"><a href="/">⚽ Futebol</a><a href="/modulos.html" aria-current="page">▦ Projetos</a><a href="https://github.com/rhianmello" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="/trafego.html" class="admin" data-admin-only hidden>Admin ↗</a></nav></div></header>
+<main class="wrap">
+ <div class="hero">
+  <div><p class="eyebrow"><i aria-hidden="true"></i> CENTRAL DE ACESSO / NÓS PASSA</p><h1>Todos os projetos.<br><span>Um só lugar.</span></h1>
+   <p class="lead">O mapa dos sites, aplicativos e ferramentas que estão sendo desenvolvidos. Encontre cada projeto, acompanhe sua organização e abra diretamente o endereço publicado.</p></div>
+  <div class="hero-stats"><div class="stat"><strong id="statProjects">12</strong><span>ACESSOS CATALOGADOS</span></div><div class="stat"><strong>3</strong><span>CATEGORIAS</span></div><div class="stat"><strong>✓</strong><span>LINKS VERIFICADOS</span></div></div>
+ </div>
+ <div class="tools" role="search"><label class="search" for="projectSearch">
+   <svg width="19" height="19" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+   <input id="projectSearch" type="search" autocomplete="off" placeholder="Buscar projeto, site ou ferramenta..." aria-label="Buscar projetos"/>
+   <span class="clear" id="clearSearch" aria-hidden="true">✕</span></label>
+   <div class="filters" role="group" aria-label="Filtrar categorias">
+    <button class="filter active" type="button" data-filter="all" aria-pressed="true">Todos</button>
+    <button class="filter" type="button" data-filter="nospassa" aria-pressed="false">Nós Passa</button>
+    <button class="filter" type="button" data-filter="produtos" aria-pressed="false">Sistemas</button>
+    <button class="filter" type="button" data-filter="outros" aria-pressed="false">Outros projetos</button>
+   </div>
+ </div>
+ <div class="result-line"><span id="resultCount" role="status" aria-live="polite"><b>12 projetos</b> encontrados</span><span class="hint">Clique no card para abrir o site ↗</span></div>
+
+ <section class="group" data-group="nospassa" style="--section-color:#63e58c" aria-labelledby="nospassaTitle">
+  <header><div class="group-title"><i aria-hidden="true"></i><div><h2 id="nospassaTitle">Nós Passa</h2><p>Portal de futebol, conteúdos e páginas do domínio principal.</p></div></div><span class="group-count" data-group-count>4 projetos</span></header>
+  <div class="grid">
+   <a class="card" href="/" data-card data-category="nospassa" style="--accent:#63e58c"><div class="card-top"><span class="icon" aria-hidden="true">⚽</span><span class="tag">Publicado</span></div><h3>Futebol ao Vivo</h3><p>Placares, jogos do dia, campeonatos, calendário e busca de times.</p><div class="card-bottom"><span class="url">nospassa.com.br</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="/apostas.html" data-card data-category="nospassa" style="--accent:#a9e26d"><div class="card-top"><span class="icon" aria-hidden="true">◎</span><span class="tag">Publicado</span></div><h3>Apostas e Guias</h3><p>Conteúdo explicativo sobre apostas esportivas, tipos de mercados e gestão de risco.</p><div class="card-bottom"><span class="url">nospassa.com.br/apostas.html</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="/palpites.html" data-card data-category="nospassa" style="--accent:#ffd180"><div class="card-top"><span class="icon" aria-hidden="true">♧</span><span class="tag login">Área de acesso</span></div><h3>Área do Grupo</h3><p>Acesso ao grupo do Nós Passa e aos recursos disponibilizados aos participantes.</p><div class="card-bottom"><span class="url">nospassa.com.br/palpites.html</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="/frota/" data-card data-category="nospassa" style="--accent:#65baf0"><div class="card-top"><span class="icon" aria-hidden="true">▣</span><span class="tag">Publicado</span></div><h3>Nós Passa Frotas</h3><p>Página de apresentação do controle de veículos, despesas e gestão de frota.</p><div class="card-bottom"><span class="url">nospassa.com.br/frota</span><span class="link-arrow">↗</span></div></a>
+  </div>
+ </section>
+
+ <section class="group" data-group="produtos" style="--section-color:#4ed4c6" aria-labelledby="produtosTitle">
+  <header><div class="group-title"><i aria-hidden="true"></i><div><h2 id="produtosTitle">Sistemas e produtos digitais</h2><p>Ferramentas de gestão e análise publicadas em domínios próprios.</p></div></div><span class="group-count" data-group-count>4 projetos</span></header>
+  <div class="grid">
+   <a class="card" href="https://frota.nospassa.com.br/" target="_blank" rel="noopener noreferrer" data-card data-category="produtos" style="--accent:#4dccf3"><div class="card-top"><span class="icon" aria-hidden="true">▰</span><span class="tag">Publicado</span></div><h3>XRMOVI</h3><p>Site comercial do software de gestão de frotas, manutenção, abastecimento e relatórios.</p><div class="card-bottom"><span class="url">frota.nospassa.com.br</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="https://frota.nospassa.com.br/v3/" target="_blank" rel="noopener noreferrer" data-card data-category="produtos" style="--accent:#428cf0"><div class="card-top"><span class="icon" aria-hidden="true">⚙</span><span class="tag login">Painel / V3</span></div><h3>XRMOVI — Sistema V3</h3><p>Aplicação de gestão de veículos, motoristas, contratos, custos e indicadores.</p><div class="card-bottom"><span class="url">frota.nospassa.com.br/v3</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="/btc-radar/" data-card data-category="produtos" style="--accent:#f0be68"><div class="card-top"><span class="icon" aria-hidden="true">₿</span><span class="tag">Publicado</span></div><h3>ChainWatch — Radar BTC</h3><p>Monitor público de Bitcoin, transações on-chain e acompanhamento de endereços.</p><div class="card-bottom"><span class="url">nospassa.com.br/btc-radar</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="/btc-radar/app/" data-card data-category="produtos" style="--accent:#e3b654"><div class="card-top"><span class="icon" aria-hidden="true">◈</span><span class="tag login">Login</span></div><h3>ChainWatch — Meu Painel</h3><p>Carteiras pessoais, consulta de saldos, histórico e configurações de alertas.</p><div class="card-bottom"><span class="url">nospassa.com.br/btc-radar/app</span><span class="link-arrow">↗</span></div></a>
+  </div>
+ </section>
+
+ <section class="group" data-group="outros" style="--section-color:#b69ef5" aria-labelledby="outrosTitle">
+  <header><div class="group-title"><i aria-hidden="true"></i><div><h2 id="outrosTitle">Outros projetos publicados</h2><p>Projetos de engenharia, serviços e ferramentas independentes.</p></div></div><span class="group-count" data-group-count>4 projetos</span></header>
+  <div class="grid">
+   <a class="card" href="https://rhianmello.github.io/CPL-EPC15/" target="_blank" rel="noopener noreferrer" data-card data-category="outros" style="--accent:#61b4f4"><div class="card-top"><span class="icon" aria-hidden="true">◧</span><span class="tag">Externo</span></div><h3>BI CPL — EPC-15</h3><p>Planejamento de obra, avanço físico, indicadores e acompanhamento das unidades.</p><div class="card-bottom"><span class="url">github.io/CPL-EPC15</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="https://rhianmello.github.io/CPL-EPC15/modulos.html" target="_blank" rel="noopener noreferrer" data-card data-category="outros" style="--accent:#85b1fa"><div class="card-top"><span class="icon" aria-hidden="true">▦</span><span class="tag">Externo</span></div><h3>CPL — Central de Módulos</h3><p>Catálogo dos painéis da EPC-15: planejamento, frota, suprimentos e qualidade.</p><div class="card-bottom"><span class="url">github.io/CPL-EPC15/modulos</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="https://rhianmello.github.io/Refrigeracao100/" target="_blank" rel="noopener noreferrer" data-card data-category="outros" style="--accent:#bf9af5"><div class="card-top"><span class="icon" aria-hidden="true">❄</span><span class="tag">Externo</span></div><h3>Refrigeração 100</h3><p>Site independente relacionado a serviços de refrigeração.</p><div class="card-bottom"><span class="url">github.io/Refrigeracao100</span><span class="link-arrow">↗</span></div></a>
+   <a class="card" href="https://rhianmello.github.io/projeto-site/gerador-curriculo/" target="_blank" rel="noopener noreferrer" data-card data-category="outros" style="--accent:#ee99b8"><div class="card-top"><span class="icon" aria-hidden="true">▤</span><span class="tag">Externo</span></div><h3>CurrículoPro</h3><p>Gerador de currículo profissional e ferramentas de apoio à candidatura.</p><div class="card-bottom"><span class="url">github.io/projeto-site/gerador-curriculo</span><span class="link-arrow">↗</span></div></a>
+  </div>
+ </section>
+
+ <div class="empty" id="noResults" hidden><h3>Nenhum projeto encontrado</h3><p>Tente outro termo ou volte a mostrar todas as categorias.</p><button id="resetFilters" type="button">Mostrar todos</button></div>
+ <div class="note"><span class="note-icon" aria-hidden="true">◎</span><div><strong>Um lugar para acompanhar seus projetos</strong><p>Os links acima foram verificados em 03/11/2026. Esta central reúne páginas e módulos publicados, sem mostrar repositórios privados ou informações de administração. Novos projetos podem ser adicionados conforme forem publicados.</p></div></div>
+</main>
+<footer><div class="wrap"><span>© Nós Passa • Central de Projetos</span><span>12 acessos verificados em 03/11/2026 · <a href="https://github.com/rhianmello" target="_blank" rel="noopener noreferrer">Repositórios públicos no GitHub ↗</a></span></div></footer>
+<script>
+(() => {
+ const search=document.getElementById("projectSearch");
+ const clear=document.getElementById("clearSearch");
+ const filters=[...document.querySelectorAll(".filter")];
+ const cards=[...document.querySelectorAll("[data-card]")];
+ const groups=[...document.querySelectorAll("[data-group]")];
+ const label=document.getElementById("resultCount");
+ const empty=document.getElementById("noResults");
+ const normal=s=>(s||"").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+ let filter="all";
+ function update(){
+  const q=normal(search.value.trim());
+  let matches=0;
+  for(const card of cards){
+   const inCategory=filter==="all"||card.dataset.category===filter;
+   const searchText=normal(card.textContent+" "+card.getAttribute("href"));
+   const visible=inCategory&&(!q||searchText.includes(q));
+   card.hidden=!visible;
+   if(visible)matches++;
+  }
+  for(const group of groups){
+   const n=group.querySelectorAll('[data-card]:not([hidden])').length;
+   group.hidden=n===0;
+   group.querySelector("[data-group-count]").textContent=n+" "+(n===1?"projeto":"projetos");
+  }
+  label.innerHTML="<b>"+matches+" "+(matches===1?"projeto":"projetos")+"</b> "+(matches===1?"encontrado":"encontrados");
+  empty.hidden=matches!==0;
+  clear.classList.toggle("visible",Boolean(search.value));
+  document.getElementById("statProjects").textContent=cards.length;
+ }
+ function setFilter(value){
+  filter=value;
+  filters.forEach(btn=>{
+   const active=btn.dataset.filter===value;
+   btn.classList.toggle("active",active);
+   btn.setAttribute("aria-pressed",String(active));
+  });
+  update();
+ }
+ search.addEventListener("input",update);
+ clear.addEventListener("click",()=>{
+  search.value="";search.focus();update();
+ });
+ filters.forEach(btn=>btn.addEventListener("click",()=>setFilter(btn.dataset.filter)));
+ document.getElementById("resetFilters").addEventListener("click",()=>{
+  search.value="";setFilter("all");search.focus();
+ });
+ search.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&search.value){search.value="";update();}
+ });
+ update();
+})();
+</script>
+</body></html>
