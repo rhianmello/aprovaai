@@ -60,7 +60,7 @@ async function inspect(item,gen,accessToken){
   const res=await fetch(url,{headers:{Authorization:"Bearer "+accessToken,"x-chainwatch-session":"Bearer "+accessToken,apikey:"sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d",Accept:"application/json"},cache:"no-store",signal:AbortSignal.timeout(30000)});
   const data=await res.json();
   if(gen!==generation)return;
-  if(!res.ok||!data.ok||data.wallet_id!==item.wallet.id)throw Error(data.error||"Resposta inválida");
+  if(!res.ok||!data.ok||data.wallet_id!==item.wallet.id){item.error=res.status===401?"auth":res.status===429?"limit":"other";throw Error(data.error||"Resposta inválida");}
   item.state="ready";item.info=data;
  }catch(e){if(gen!==generation)return;item.state="error";item.info=null}
  if(gen===generation)render();
@@ -81,8 +81,9 @@ async function refresh(){
   for(const item of rows){if(gen!==generation)break;await inspect(item,gen,t)}
   if(gen===generation){
    const good=rows.filter(x=>x.state==="ready").length;
+   const authFailed=rows.some(x=>x.error==="auth");
    status(good===rows.length?"Saldos consultados. Atualizações manuais usam cache de até 5 minutos.":
-    good?"Consulta parcial: "+good+" de "+rows.length+" carteiras.":"Exploradores indisponíveis. Seus endereços continuam salvos.",good!==rows.length);
+    good?"Consulta parcial: "+good+" de "+rows.length+" carteiras.":authFailed?"Sua sessão não foi autorizada para consulta. Saia da conta e entre novamente.":"Fontes de consulta indisponíveis. Suas carteiras continuam salvas.",good!==rows.length);
   }
   lastFetched=Date.now();
  }catch(e){if(gen===generation)status("Falha ao carregar seus endereços. Confira a sessão e tente novamente.",true)}
