@@ -1,0 +1,49 @@
+/* ChainWatch personal account panel — isolated from public tracker */
+.personal-dashboard{margin-top:-38px;padding-bottom:83px;scroll-margin-top:25px}
+.personal-head{display:flex;align-items:end;justify-content:space-between;gap:25px;margin-bottom:20px}
+.personal-head h2{font:700 clamp(29px,3.4vw,45px)/1.12 'Space Grotesk',sans-serif;letter-spacing:-.05em;margin:10px 0}
+.personal-head h2 span{color:var(--teal)}.personal-head p{margin:0;color:#94abc2;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.personal-top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px;align-items:center}
+.personal-notice{display:flex;gap:13px;align-items:start;padding:15px 17px;border:1px solid #2a5e60;background:linear-gradient(120deg,#112e33,#101c2c);border-radius:12px;margin-bottom:15px}
+.personal-notice>span{font-size:25px;color:var(--teal);line-height:1}
+.personal-notice strong{font-size:12px;color:#e0fff3}.personal-notice p{margin:4px 0 0;color:#93b4bb;font-size:11px;line-height:1.75}
+.personal-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.personal-kpi{background:linear-gradient(145deg,#132338,#0b1726);border:1px solid #2c4658;padding:19px 21px;border-radius:12px;min-width:0}
+.personal-kpi span{display:block;color:#91b1c3;font-size:9px;font-weight:800;letter-spacing:.11em}
+.personal-kpi strong{font:700 clamp(23px,2.45vw,34px) 'Space Grotesk',sans-serif;color:#eafff5;display:block;margin:8px 0 3px;letter-spacing:-.04em;overflow-wrap:anywhere}
+.personal-kpi small{font-size:10px;color:#809db3}
+.personal-feedback{font-size:12px;color:#a3c8ce;padding:12px 16px;border:1px solid #2b5360;background:#111e30;border-radius:9px;margin:14px 0}
+.personal-feedback.error{color:#ffd2d8;border-color:#864d5e;background:#301e2e}
+.personal-wallets{display:grid;gap:13px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.personal-wallet-card{min-width:0;background:#101a2a;border:1px solid #2a4056;border-radius:14px;overflow:hidden}
+.personal-wallet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:17px 19px 13px}
+.personal-wallet-head h3{font:700 18px/1.25 'Space Grotesk',sans-serif;letter-spacing:-.025em;margin:0 0 7px;overflow-wrap:anywhere}
+.personal-wallet-head code{display:block;font:500 11px ui-monospace,Consolas,monospace;color:#8fa9c3;overflow-wrap:anywhere}
+.personal-wallet-pill{white-space:nowrap;background:#1b2c3b;color:#a4b6c9;border:1px solid #34526a;padding:5px 9px;border-radius:999px;font-size:9px;font-weight:800}
+.personal-wallet-pill.ok{color:#75edd1;background:#0d342f;border-color:#285e52}
+.personal-wallet-pill.warn{color:#ffcd90;background:#3a2d20;border-color:#68513b}
+.personal-wallet-balance{margin:0 19px;padding:16px 0;border-top:1px solid #24384b;border-bottom:1px solid #24384b}
+.personal-wallet-balance>span{display:block;color:#87a2b7;font-size:9px;letter-spacing:.12em;font-weight:800}
+.personal-wallet-balance>strong{display:block;font:700 clamp(21px,2vw,27px)/1.35 'Space Grotesk',sans-serif;letter-spacing:-.028em;margin:7px 0;color:#e9fff7;overflow-wrap:anywhere}
+.personal-wallet-balance>small{font-size:10px;color:#7f9bb0}
+.personal-wallet-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:0 19px;padding:14px 0}
+.personal-wallet-meta div{min-width:0}
+.personal-wallet-meta label{display:block;color:#7592a9;font-size:9px;letter-spacing:.07em;margin-bottom:5px}
+.personal-wallet-meta b{font:600 12px 'Space Grotesk';color:#d9ebf8;overflow-wrap:anywhere}
+.personal-wallet-txs{padding:12px 19px 15px;border-top:1px solid #25394c}
+.personal-wallet-txs>strong{display:block;font-size:11px;margin-bottom:8px;color:#d9edf5}
+.personal-tx{display:flex;gap:9px;align-items:center;justify-content:space-between;border:1px solid #294158;background:#0a1727;border-radius:9px;padding:10px;margin-top:7px;min-width:0}
+.personal-tx-body{min-width:0}.personal-tx-body b{display:block;font:600 11px 'DM Sans',sans-serif;color:#dceaf6}.personal-tx-body small{font-size:10px;color:#7f9ab0;display:block;overflow-wrap:anywhere}
+.personal-tx-value{text-align:right;font:700 11px 'Space Grotesk',sans-serif;white-space:nowrap;color:#75efd3}
+.personal-tx-value.out{color:#ffaeb7}.personal-tx-value.same{color:#b4d1e1}
+.personal-tx a{color:#9cebd8;font-size:10px;margin-left:5px}
+.personal-wallet-bottom{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 19px;background:#0c1626;border-top:1px solid #263749;color:#83a0b4;font-size:10px}
+.personal-wallet-bottom a{font-weight:800;color:#69e9c3;white-space:nowrap}
+.personal-empty{padding:23px;border:1px dashed #416278;background:#0d1d2d;border-radius:12px;grid-column:1/-1;display:grid;gap:11px}
+.personal-empty h3{margin:0;font:700 21px 'Space Grotesk';color:#e9fff8}
+.personal-empty p{margin:0;color:#8faec0;font-size:12px}
+.personal-empty a{color:#68eac7;font-weight:800;font-size:12px}
+.personal-footnote{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 2px;color:#7f9bb0;font-size:10px}
+.personal-footnote a{color:#66e5c6;font-weight:700}
+@media(max-width:940px){.personal-head{align-items:flex-start;flex-direction:column}.personal-top-actions{justify-content:flex-start}.personal-wallets{grid-template-columns:1fr}}
+@media(max-width:590px){.personal-dashboard{margin-top:-25px}.personal-top-actions{width:100%}.personal-top-actions>*{flex:1;text-align:center;padding:10px 8px}.personal-summary{grid-template-columns:1fr 1fr}.personal-kpi:last-child{grid-column:1/-1}.personal-wallet-head h3{font-size:16px}.personal-wallet-balance>strong{font-size:23px}}
