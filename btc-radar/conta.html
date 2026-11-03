@@ -21,7 +21,7 @@
 <main class="wrap" id="main">
  <div class="intro"><div class="eyebrow"><span class="dot"></span> CONTA CHAINWATCH · BETA</div>
   <h1>Seu radar. <span>Suas carteiras.</span></h1>
-  <p>Crie uma conta gratuita para organizar endereços públicos de Bitcoin em uma lista privada. O rastreamento individual e os alertas automáticos serão adicionados em outra etapa.</p>
+  <p>Crie uma conta gratuita para organizar endereços públicos de Bitcoin em uma lista privada. O painel principal agora permite consultar saldos e últimas transações dos endereços cadastrados; alertas automáticos ainda estão em desenvolvimento.</p>
  </div>
  <p id="status" class="status" role="status" aria-live="polite">Carregando acesso seguro...</p>
  <section id="authView" class="auth-layout" hidden>
@@ -64,10 +64,10 @@
  <section id="accountView" hidden>
    <div class="account-header card">
      <div><span class="eyebrow">ÁREA PRIVADA</span><h2>Minhas carteiras</h2><p id="welcome">Carregando perfil...</p></div>
-     <button id="logoutBtn" type="button" class="outline">Sair da conta</button>
+     <div class="account-top-actions"><a href="./#meu-radar" class="outline">Ver meu painel ↗</a><button id="logoutBtn" type="button" class="outline">Sair da conta</button></div>
    </div>
-   <div class="info-box"><strong>Endereços salvos, ainda não monitorados automaticamente.</strong>
-      <p>Esta etapa permite escolher e organizar seus endereços. A verificação contínua de carteiras pessoais e os alertas serão integrados posteriormente. O radar público continua disponível.</p></div>
+   <div class="info-box"><strong>Seus endereços agora aparecem no painel principal.</strong>
+      <p>Depois de salvar, acesse “Ver meu painel” para consultar saldo, confirmações e transações recentes. A verificação pessoal é sob demanda, com cache para respeitar os limites dos exploradores. Alertas contínuos ainda não estão ativos.</p></div>
    <div class="account-grid">
     <div class="card">
       <div class="section-row"><div><h3>Adicionar endereço BTC</h3><p>Insira apenas o endereço público de uma carteira Bitcoin.</p></div><span class="counter" id="count">0 / 5</span></div>
