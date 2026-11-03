@@ -55,10 +55,13 @@ function updateUI(data){
  $("lastCheck").textContent=run&&run.finished_at?when(run.finished_at):"Aguardando";
  $("checkDetail").textContent=run&&run.finished_at?run.checked+"/19 carteiras consultadas · "+(run.errors||0)+" falhas":"Monitor inicializando";
  $("terminalStatus").textContent=run&&run.finished_at?"Última execução: "+when(run.finished_at):"Sem verificação concluída";
- $("syncChip").classList.toggle("warn",!checkFinished||run.errors>0);
- $("syncText").textContent=!run?"Aguardando primeira varredura":!run.finished_at?"Processando":run.errors>0?"Verificação parcial":"Dados consultados";
+ const delaySeconds=run&&run.finished_at?Math.floor((Date.now()-new Date(run.finished_at).getTime())/1000):Infinity;
+ const delayed=delaySeconds>30;
+ $("syncChip").classList.toggle("warn",!checkFinished||run.errors>0||delayed);
+ $("syncText").textContent=!run?"Aguardando primeira varredura":!run.finished_at?"Processando":run.errors>0?"Verificação parcial":delayed?"Dados atrasados":"Dados consultados";
  if(!run||!run.finished_at)notice("A varredura está inicializando. Os saldos e estados só aparecem depois de uma consulta concluída.");
  else if(run.errors)notice("Verificação parcial: "+run.checked+" de 19 carteiras consultadas. "+run.errors+" falha(s). Não é possível garantir ausência de saídas.",true);
+ else if(delayed)notice("Última consulta concluída há "+delaySeconds+" segundos. O sistema pode estar aguardando resposta dos exploradores. Não interprete este painel como um estado em tempo real.",true);
  else notice("Última execução concluída em "+when(run.finished_at)+". Dados da blockchain podem sofrer atraso ou reorganização.");
  renderWallets();renderEvents();
  updateSeen(events,checkFinished);
