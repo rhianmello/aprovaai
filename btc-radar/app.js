@@ -1,8 +1,8 @@
 "use strict";
 const API="https://ztqtcbzjesrkuaijmylm.supabase.co/functions/v1/btc-radar";
-const TWO_MINUTES=120;
+const TEN_SECONDS=10;
 const $=id=>document.getElementById(id);
-let wallets=[],events=[],timeToRefresh=TWO_MINUTES,loaded=false,checkFinished=false;
+let wallets=[],events=[],timeToRefresh=TEN_SECONDS,loaded=false,checkFinished=false;
 let notificationsAllowed=false,fetching=false;
 const seenKey="chainwatch_seen_txids_v1";
 const pt=new Intl.NumberFormat("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:8});
@@ -11,7 +11,7 @@ const safe=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;
 const formatSat=v=>v==null?"—":pt.format(Number(v)/1e8)+" BTC";
 const validBtc=s=>/^bc1q[ac-hj-np-z02-9]{38,90}$/i.test(s||"");
 const validTx=s=>/^[a-f0-9]{64}$/i.test(s||"");
-const when=s=>s?new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"short",timeZone:"America/Sao_Paulo"}).format(new Date(s)):"—";
+const when=s=>s?new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"medium",timeZone:"America/Sao_Paulo"}).format(new Date(s)):"—";
 function notice(message,error=false){$("notice").textContent=message;$("notice").classList.toggle("error",error)}
 function badge(text,type){return '<span class="tag '+type+'">'+safe(text)+"</span>"}
 function renderWallets(){
@@ -96,7 +96,7 @@ async function refresh(){
    notice("Não foi possível consultar o servidor agora. Não interprete os dados anteriores como estado atual. "+String(error.message||error),true);
    if(!loaded){$("lastCheck").textContent="Indisponível";$("checkDetail").textContent="Sem informação validada";}
  }finally{
-   fetching=false;$("refreshBtn").disabled=false;timeToRefresh=TWO_MINUTES;showCountdown();
+   fetching=false;$("refreshBtn").disabled=false;timeToRefresh=TEN_SECONDS;showCountdown();
  }
 }
 function showCountdown(){const mm=String(Math.floor(timeToRefresh/60)).padStart(2,"0"),ss=String(timeToRefresh%60).padStart(2,"0");$("countdown").textContent=mm+":"+ss;}
