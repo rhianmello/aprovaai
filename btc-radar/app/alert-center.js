@@ -1,4 +1,4 @@
-import {sb} from "./dashboard.js?v=1";
+import {sb} from "./dashboard.js?v=2";
 const $=id=>document.getElementById(id);
 const BASE="https://ztqtcbzjesrkuaijmylm.supabase.co";
 const MAX_BTC=21000000;
