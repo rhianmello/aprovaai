@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#070b15">
+<title>Minha Conta — ChainWatch Radar BTC</title>
+<meta name="description" content="Entre no ChainWatch e organize os endereços públicos de Bitcoin que deseja acompanhar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./conta.css">
+</head>
+<body>
+<header class="topbar">
+ <div class="wrap header-inner">
+   <a href="./" class="brand"><span class="symbol">◈</span> CHAIN<span>WATCH</span></a>
+   <a class="back-link" href="./">← Voltar ao radar público</a>
+ </div>
+</header>
+<main class="wrap" id="main">
+ <div class="intro"><div class="eyebrow"><span class="dot"></span> CONTA CHAINWATCH · BETA</div>
+  <h1>Seu radar. <span>Suas carteiras.</span></h1>
+  <p>Crie uma conta gratuita para organizar endereços públicos de Bitcoin em uma lista privada. O rastreamento individual e os alertas automáticos serão adicionados em outra etapa.</p>
+ </div>
+ <p id="status" class="status" role="status" aria-live="polite">Carregando acesso seguro...</p>
+ <section id="authView" class="auth-layout" hidden>
+   <div class="auth-card">
+    <div class="tabs" role="tablist" aria-label="Acessar conta">
+      <button type="button" id="loginTab" class="tab active" aria-selected="true" role="tab">Entrar</button>
+      <button type="button" id="signupTab" class="tab" aria-selected="false" role="tab">Criar conta</button>
+    </div>
+    <form id="loginForm" class="fields">
+     <h2>Bem-vindo de volta</h2>
+     <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="voce@exemplo.com" maxlength="254"></label>
+     <label>Senha<input name="password" type="password" required autocomplete="current-password" placeholder="Sua senha"></label>
+     <button class="primary" type="submit">Entrar na minha conta <span>→</span></button>
+     <button type="button" id="forgotBtn" class="text-link">Esqueci minha senha</button>
+    </form>
+    <form id="signupForm" class="fields" hidden>
+     <h2>Crie sua conta</h2>
+     <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="voce@exemplo.com" maxlength="254"></label>
+     <label>Senha <small>mínimo de 8 caracteres</small><input name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Crie uma senha segura"></label>
+     <label>Confirmar senha<input name="confirmation" type="password" required minlength="8" autocomplete="new-password" placeholder="Repita a senha"></label>
+     <button class="primary" type="submit">Criar conta gratuita <span>→</span></button>
+     <p class="tiny">Ao se cadastrar, você cria uma conta para armazenar sua lista de endereços públicos. Não forneça chaves privadas ou frases de recuperação.</p>
+    </form>
+    <form id="forgotForm" class="fields" hidden>
+      <h2>Recuperar acesso</h2><p class="muted">Informe seu e-mail para receber as instruções de recuperação.</p>
+      <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="voce@exemplo.com"></label>
+      <button class="primary" type="submit">Enviar instruções <span>→</span></button>
+      <button type="button" id="backLoginBtn" class="text-link">Voltar ao login</button>
+    </form>
+   </div>
+   <aside class="side-card">
+      <div class="side-icon">◎</div>
+      <h3>O que sua conta permite?</h3>
+      <div class="point"><span>01</span><p>Salvar até <strong>5 carteiras BTC</strong> na versão de testes.</p></div>
+      <div class="point"><span>02</span><p>Dar nomes e organizar seus endereços.</p></div>
+      <div class="point"><span>03</span><p>Consultar a carteira no explorador blockchain.</p></div>
+      <p class="side-note">Os alertas por e-mail/Telegram e a análise automática das carteiras pessoais ainda não estão disponíveis.</p>
+   </aside>
+ </section>
+ <section id="accountView" hidden>
+   <div class="account-header card">
+     <div><span class="eyebrow">ÁREA PRIVADA</span><h2>Minhas carteiras</h2><p id="welcome">Carregando perfil...</p></div>
+     <button id="logoutBtn" type="button" class="outline">Sair da conta</button>
+   </div>
+   <div class="info-box"><strong>Endereços salvos, ainda não monitorados automaticamente.</strong>
+      <p>Esta etapa permite escolher e organizar seus endereços. A verificação contínua de carteiras pessoais e os alertas serão integrados posteriormente. O radar público continua disponível.</p></div>
+   <div class="account-grid">
+    <div class="card">
+      <div class="section-row"><div><h3>Adicionar endereço BTC</h3><p>Insira apenas o endereço público de uma carteira Bitcoin.</p></div><span class="counter" id="count">0 / 5</span></div>
+      <form id="walletForm" class="fields">
+       <label>Nome da carteira<input name="label" type="text" maxlength="48" placeholder="Ex.: Carteira principal" required></label>
+       <label>Endereço público Bitcoin<input name="address" type="text" maxlength="90" placeholder="bc1... ou 1... ou 3..." autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
+       <button type="submit" class="primary">Adicionar carteira <span>+</span></button>
+      </form>
+      <p class="tiny warning">Nunca informe sua seed, chave privada, senha de exchange ou código de autenticação. Aqui só usamos endereços públicos.</p>
+    </div>
+    <div class="card wallet-card">
+      <div class="section-row"><div><h3>Endereços cadastrados</h3><p>Visíveis apenas na sua conta.</p></div><span class="mini-pill">BETA</span></div>
+      <div id="walletList" class="wallet-list" aria-live="polite"><p class="empty">Carregando endereços...</p></div>
+    </div>
+   </div>
+ </section>
+ <section id="recoveryView" class="card recovery-card" hidden>
+   <h2>Escolha sua nova senha</h2>
+   <p class="muted">Defina uma senha nova para voltar à sua conta.</p>
+   <form id="recoveryForm" class="fields">
+    <label>Nova senha<input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Repita a nova senha<input name="confirmation" type="password" minlength="8" autocomplete="new-password" required></label>
+    <button class="primary" type="submit">Atualizar minha senha</button>
+   </form>
+ </section>
+</main>
+<footer class="wrap foot"><span>CHAINWATCH / CONTA</span><span>Projeto independente. Não envie informações secretas.</span></footer>
+<script type="module" src="./conta.js"></script>
+</body>
+</html>
