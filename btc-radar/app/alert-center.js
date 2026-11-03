@@ -67,7 +67,7 @@ function renderSettings(){
  $("alertTelegramToggle").disabled=!config.telegram_ready&&!prefs?.telegram_enabled||!linked&&!prefs?.telegram_enabled;
  $("alertTelegramStatus").textContent=linked?
   "Conta Telegram vinculada. "+(config.telegram_ready?"Canal disponível.":"Envio suspenso até configurar o bot."):
-  config.telegram_ready?"Conecte seu Telegram para ativar avisos.":"Aguardando configuração do bot Telegram.";
+  config.telegram_ready?"Conecte seu Telegram para ativar avisos.":config.telegram_setup_pending?"O bot foi configurado, mas o webhook Telegram ainda não está ativo.":"Aguardando configuração do bot Telegram.";
  $("telegramConnectBtn").disabled=!config.telegram_ready||linked;
  $("telegramConnectBtn").textContent=linked?"Telegram vinculado ✓":"Vincular Telegram ↗";
  $("telegramDisconnectBtn").hidden=!linked;
