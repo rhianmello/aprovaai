@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080e19"><meta name="robots" content="noindex,nofollow">
+<title>Meu painel — ChainWatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./dashboard.css?v=1">
+</head>
+<body>
+<div class="shell">
+ <aside class="sidebar" id="sidebar" aria-label="Menu principal">
+   <a href="../" class="brand"><span class="brand-mark">◈</span><span class="brand-copy">CHAIN<span>WATCH</span><small>BTC INTELLIGENCE</small></span></a>
+   <div class="sb-caption">ESPAÇO DE TRABALHO</div>
+   <nav class="side-nav" id="sideNav">
+     <button class="nav-item active" data-view="overview"><span class="nav-icon">▦</span>Visão geral</button>
+     <button class="nav-item" data-view="wallets"><span class="nav-icon">◈</span>Minhas carteiras <span class="nav-count" id="sideWalletCount">—</span></button>
+     <button class="nav-item" data-view="binance"><span class="nav-icon">◎</span>Radar Binance <span class="tiny-live">LIVE</span></button>
+     <button class="nav-item" data-view="history"><span class="nav-icon">⇄</span>Histórico</button>
+     <button class="nav-item" data-view="alerts"><span class="nav-icon">♧</span>Alertas <span class="soon">EM BREVE</span></button>
+     <button class="nav-item" data-view="plans"><span class="nav-icon">✧</span>Planos e preços</button>
+   </nav>
+   <div class="sb-caption sb-gap">MINHA CONTA</div>
+   <nav class="side-nav">
+     <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Configurações</button>
+     <a class="nav-item nav-link" href="../" target="_self"><span class="nav-icon">↗</span>Ver site público</a>
+   </nav>
+   <div class="sidebar-bottom">
+     <div class="beta-box"><span class="beta-status"><i></i> ÁREA BETA</span><strong>Seu monitor, do seu jeito.</strong><p>As consultas de carteiras pessoais são sob demanda. Alertas pagos ainda não estão ativos.</p></div>
+     <button id="logoutBtn" class="signout" type="button"><span>⇥</span> Sair da conta</button>
+   </div>
+ </aside>
+ <div class="mobile-cover" id="mobileCover" hidden></div>
+ <div class="workspace">
+   <header class="topbar">
+     <div class="head-left"><button id="menuBtn" class="menu-button" aria-label="Abrir menu" aria-expanded="false">☰</button><div class="breadcrumb">CHAINWATCH <span>/</span> <strong id="crumb">Visão geral</strong></div></div>
+     <div class="head-right"><span class="public-status"><i></i> BTC MAINNET</span><div id="chainwatchOnlineCounter" class="online-chip" title="Estimativa de sessões ativas neste site"><i></i><span>Online</span><strong id="chainwatchOnlineCount">—</strong></div><button id="refreshBtn" class="head-refresh" type="button">↻ Atualizar dados</button><span id="userAvatar" class="avatar" title="Conta conectada">◈</span></div>
+   </header>
+   <main id="workspaceMain">
+     <div id="flash" class="flash" role="status" aria-live="polite" hidden></div>
+     <section class="view active" id="view-overview" aria-labelledby="titleOverview">
+       <div class="page-intro"><div><div class="kicker">PAINEL / RESUMO</div><h1 id="titleOverview">Visão geral <span>✦</span></h1><p id="welcomeText">Suas carteiras e informações da rede Bitcoin, organizadas em um só lugar.</p></div><button class="primary-button" data-go="wallets">+ Adicionar carteira</button></div>
+       <div class="stats-grid">
+         <article class="stat"><span>CARTEIRAS CADASTRADAS <b>◈</b></span><strong id="kpiWallets">—</strong><small>Limite gratuito: 5 endereços</small></article>
+         <article class="stat"><span>SALDO BTC CONSULTADO <b>₿</b></span><strong id="kpiBalance">—</strong><small id="kpiBalanceDetail">Aguardando dados verificáveis</small></article>
+         <article class="stat"><span>CONSULTAS DISPONÍVEIS <b>◎</b></span><strong id="kpiChecked">—</strong><small>Cache por até 5 minutos</small></article>
+         <article class="stat"><span>CASO BINANCE <b>↗</b></span><strong>19 <em>endereços</em></strong><small>Radar público independente</small></article>
+       </div>
+       <div class="overview-grid">
+         <div class="surface">
+           <div class="surface-head"><div><h2>Minhas carteiras</h2><p>Clique em uma carteira para abrir os detalhes no painel.</p></div><button class="text-action" data-go="wallets">Ver todas →</button></div>
+           <div id="overviewWallets" class="overview-wallets"><p class="loading">Carregando carteiras...</p></div>
+         </div>
+         <div class="surface spotlight">
+           <div class="section-kicker">INTELLIGENCE / CASE STUDY</div><span class="spotlight-icon">₿</span><h2>Rastreamento do caso Binance</h2><p>Acompanhe os 19 endereços investigados, seus saldos observados e as transferências registradas.</p>
+           <div class="case-metrics"><div><span>ENDEREÇOS</span><strong>19</strong></div><div><span>ATUALIZAÇÃO</span><strong>2 min*</strong></div></div>
+           <button class="outline-button" data-go="binance">Abrir radar público no painel →</button>
+           <small>*Verificação agendada. O dado pode atrasar quando os exploradores estão indisponíveis.</small>
+         </div>
+       </div>
+       <div class="surface lower">
+         <div class="surface-head"><div><h2>Atividade recente</h2><p>Últimas transações disponíveis dos endereços cadastrados.</p></div><button class="text-action" data-go="history">Histórico →</button></div>
+         <div id="overviewEvents"><p class="loading">Aguardando consultas...</p></div>
+       </div>
+     </section>
+     <section class="view" id="view-wallets" aria-labelledby="titleWallets">
+       <div class="page-intro"><div><div class="kicker">ENDEREÇOS / MEU RADAR</div><h1 id="titleWallets">Minhas carteiras</h1><p>Selecione um endereço à esquerda. Os detalhes abrem ao lado, sem deslocar a página.</p></div><button id="addWalletBtn" class="primary-button">+ Nova carteira</button></div>
+       <div class="wallet-layout">
+         <div class="surface wallet-sidebar">
+           <div class="surface-head compact"><h2>Endereços salvos <span id="listCount">0/5</span></h2></div>
+           <div id="walletList" class="wallet-list"><p class="loading">Carregando...</p></div>
+           <div class="wallet-list-bottom">Só endereços públicos Bitcoin. Não informe senhas ou frases de recuperação.</div>
+         </div>
+         <div id="walletDetail" class="surface wallet-detail">
+           <div class="empty-detail"><span>◈</span><h2>Selecione uma carteira</h2><p>O saldo, as transações e os links de verificação aparecerão aqui.</p></div>
+         </div>
+       </div>
+     </section>
+     <section class="view" id="view-binance" aria-labelledby="titleBinance">
+       <div class="page-intro"><div><div class="kicker">OBSERVATÓRIO / CASO PÚBLICO</div><h1 id="titleBinance">Radar Binance</h1><p>19 endereços públicos do caso investigado. Informações do rastreador, sem vinculação com suas carteiras pessoais.</p></div><a class="outline-button" href="../#radar" target="_blank" rel="noopener">Abrir radar completo ↗</a></div>
+       <div class="stats-grid stats-3"><div class="stat"><span>ENDEREÇOS <b>◈</b></span><strong id="binanceWallets">19</strong><small>Monitorados pelo radar</small></div><div class="stat"><span>SAÍDAS REGISTRADAS <b>↗</b></span><strong id="binanceEvents">—</strong><small>Eventos conhecidos</small></div><div class="stat"><span>ÚLTIMA VERIFICAÇÃO <b>◷</b></span><strong class="small-stat" id="binanceChecked">—</strong><small id="binanceHealth">Aguardando consulta</small></div></div>
+       <div class="surface"><div class="surface-head"><div><h2>Endereços monitorados</h2><p>Consulte o histórico direto no explorador de blocos.</p></div><button id="binanceReload" class="outline-button">↻ Sincronizar</button></div><div class="table-scroller"><table><thead><tr><th>#</th><th>Endereço</th><th>Saldo observado</th><th>Última leitura</th><th>Explorador</th></tr></thead><tbody id="binanceRows"><tr><td colspan="5">Carregando radar...</td></tr></tbody></table></div></div>
+     </section>
+     <section class="view" id="view-history" aria-labelledby="titleHistory">
+       <div class="page-intro"><div><div class="kicker">TRANSAÇÕES / CARTEIRAS PESSOAIS</div><h1 id="titleHistory">Histórico</h1><p>Entradas e saídas líquidas detectadas nos endereços consultados. Exibe somente as transações recentes retornadas pelo explorador.</p></div><button class="outline-button" data-go="wallets">Minhas carteiras →</button></div>
+       <div class="surface"><div class="surface-head"><div><h2>Movimentações recentes</h2><p>Identificação por hash, sem inferir propriedade dos fundos.</p></div><span id="historyCount" class="label-pill">—</span></div><div class="table-scroller"><table><thead><tr><th>Carteira</th><th>Movimentação líquida</th><th>Confirmação</th><th>Data</th><th>Transação</th></tr></thead><tbody id="historyRows"><tr><td colspan="5">Aguardando consulta...</td></tr></tbody></table></div></div>
+     </section>
+     <section class="view" id="view-alerts" aria-labelledby="titleAlerts">
+       <div class="page-intro"><div><div class="kicker">AUTOMAÇÃO / FUTURO</div><h1 id="titleAlerts">Central de alertas</h1><p>O próximo passo do ChainWatch: notificações que chegam sem deixar a página aberta.</p></div><span class="label-pill amber">EM DESENVOLVIMENTO</span></div>
+       <div class="surface teaser"><span class="feature-symbol">♧</span><div><h2>Seus alertas automáticos ainda não estão ativos</h2><p>A versão atual permite visualizar saldos e transações, com consulta manual. E-mail, Telegram e verificação pessoal em segundo plano dependem de infraestrutura adicional e testes de entrega.</p><button data-go="plans" class="primary-button">Conhecer planos futuros →</button></div></div>
+       <div class="feature-grid"><div class="surface feature-card"><span>✉</span><h3>E-mail</h3><p>Receba avisos quando houver movimentação nos endereços escolhidos.</p><b>Planejado</b></div><div class="surface feature-card"><span>➤</span><h3>Telegram</h3><p>Notificações com links para os hashes das transações.</p><b>Planejado</b></div><div class="surface feature-card"><span>≋</span><h3>Filtros inteligentes</h3><p>Regras por montante e tipo de movimentação.</p><b>Planejado</b></div></div>
+     </section>
+     <section class="view" id="view-plans" aria-labelledby="titlePlans">
+       <div class="page-intro"><div><div class="kicker">ASSINATURAS / ACESSO</div><h1 id="titlePlans">Planos e preços</h1><p>Comece gratuitamente. Planos pagos estão em pré-lançamento e não geram cobranças.</p></div><span class="label-pill">SEM COMPROMISSO</span></div>
+       <div class="pricing-grid">
+         <article class="price-card"><span class="price-kicker">ATIVO AGORA</span><h2>Gratuito</h2><p>Exploração e consulta manual.</p><div class="money">R$ 0 <small>/mês</small></div><ul><li>Até 5 carteiras BTC</li><li>Consulta de saldo e últimas transações</li><li>Radar Binance público</li><li>Gestão básica de endereços</li></ul><button data-go="wallets" class="outline-button wide">Usar meu plano →</button></article>
+         <article class="price-card selected"><span class="price-kicker">EM BREVE · PROPOSTA</span><h2>Pro</h2><p>Para quem precisa de notificações.</p><div class="money">R$ 19,90 <small>/mês</small></div><ul><li>Até 20 carteiras (planejado)</li><li>Alertas por e-mail e Telegram (planejado)</li><li>Regras por valor (planejado)</li><li>Histórico ampliado (planejado)</li></ul><a class="primary-button wide" href="../#lista-de-interesse">Entrar na lista de interesse ↗</a></article>
+         <article class="price-card"><span class="price-kicker">EM BREVE · PROPOSTA</span><h2>Advanced</h2><p>Mais endereços e relatórios.</p><div class="money">R$ 49,90 <small>/mês</small></div><ul><li>Até 100 carteiras (planejado)</li><li>Alertas personalizados (planejado)</li><li>Exportação de relatórios (planejado)</li><li>Recursos avançados (planejado)</li></ul><a class="outline-button wide" href="../#lista-de-interesse">Quero receber novidades ↗</a></article>
+       </div>
+       <div class="pricing-info"><strong>Pagamentos ainda não habilitados.</strong> A cobrança só será ativada quando o monitoramento automático, a entrega de alertas e os controles de assinatura forem testados.</div>
+     </section>
+     <section class="view" id="view-settings" aria-labelledby="titleSettings">
+       <div class="page-intro"><div><div class="kicker">PREFERÊNCIAS / CONTA</div><h1 id="titleSettings">Configurações</h1><p>Seu cadastro e informações de acesso.</p></div></div>
+       <div class="surface settings-card"><div><span>CONTA CONECTADA</span><h2 id="settingsEmail">—</h2><p>Cadastro protegido por autenticação Supabase.</p></div><div><span>PLANO ATUAL</span><h2>Gratuito · Beta</h2><p>Até 5 endereços BTC. Nenhum pagamento ativo.</p></div><div><span>SEGURANÇA</span><h2>Endereços públicos somente</h2><p>Não forneça frases de recuperação, senhas nem chaves privadas.</p></div><div class="settings-actions"><a class="outline-button" href="../conta.html?manage=1">Gerenciar conta no cadastro ↗</a><button data-go="plans" class="outline-button">Ver planos →</button></div></div>
+     </section>
+   </main>
+ </div>
+</div>
+<div class="modal" id="walletModal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+ <div class="modal-cover" data-close-modal></div>
+ <div class="modal-card">
+  <div class="modal-head"><div><div class="kicker">CARTEIRA / BITCOIN</div><h2 id="modalTitle">Adicionar carteira</h2></div><button type="button" id="modalClose" class="icon-btn" aria-label="Fechar">✕</button></div>
+  <form id="walletForm" class="modal-form">
+    <label>Nome da carteira<input id="walletLabel" name="label" type="text" maxlength="48" required placeholder="Ex.: Minha carteira principal"></label>
+    <label>Endereço público Bitcoin<input id="walletAddress" name="address" type="text" maxlength="90" required spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="bc1..., 1... ou 3..."></label>
+    <p>Use apenas endereços públicos. Nunca forneça seed, chaves privadas ou senhas.</p>
+    <div class="modal-actions"><button type="button" class="outline-button" data-close-modal>Cancelar</button><button class="primary-button" type="submit" id="walletSave">Salvar carteira</button></div>
+  </form>
+ </div>
+</div>
+<script type="module" src="./dashboard.js?v=1"></script>
+<script type="module" src="../online.js?v=20261103-1"></script>
+</body></html>
