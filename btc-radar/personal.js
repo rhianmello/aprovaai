@@ -21,6 +21,7 @@ function renderTxs(txs){
 }
 function render(){
  $("personalCount").textContent=String(rows.length);
+ $("personalShortcutCount").textContent=rows.length+" carteira(s) na sua conta";
  const ok=rows.filter(r=>r.state==="ready"&&typeof r.info?.balance_sat==="number");
  $("personalChecked").textContent=ok.length+" / "+rows.length;
  $("personalTotal").textContent=ok.length?btc(ok.reduce((s,r)=>s+Number(r.info.balance_sat),0)):"—";
@@ -49,7 +50,9 @@ function render(){
 }
 function reset(){
  generation++;accountId=null;token=null;rows=[];busy=false;lastFetched=0;
- panel.hidden=true;cards.replaceChildren();nav.innerHTML="Entrar / Criar conta <span>↗</span>";
+ panel.hidden=true;cards.replaceChildren();$("personalShortcut").hidden=true;
+ const hero=$("personalHeroLink");if(hero){hero.href="./conta.html";hero.innerHTML="Salvar minhas carteiras <span>→</span>";}
+ nav.innerHTML="Entrar / Criar conta <span>↗</span>";
 }
 async function inspect(item,gen,accessToken){
  try{
@@ -89,9 +92,12 @@ async function setSession(session){
  if(!session?.user?.id||!session.access_token){reset();return;}
  const changed=session.user.id!==accountId;
  accountId=session.user.id;token=session.access_token;
- panel.hidden=false;nav.innerHTML="Minha conta <span>↗</span>";
+ panel.hidden=false;$("personalShortcut").hidden=false;
+ const hero=$("personalHeroLink");if(hero){hero.href="#meu-radar";hero.innerHTML="Meu radar pessoal <span>→</span>";}
+ nav.innerHTML="Minha conta <span>↗</span>";
  $("personalGreeting").textContent=(session.user.email||"Conta conectada")+" · Seus endereços cadastrados";
  if(changed||!lastFetched)await refresh();
+ if(location.hash==="#meu-radar")panel.scrollIntoView({behavior:"smooth",block:"start"});
 }
 $("personalRefresh").addEventListener("click",refresh);
 $("personalLogout").addEventListener("click",async()=>{
