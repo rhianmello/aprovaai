@@ -83,6 +83,18 @@
  <article class="plan featured"><div class="ribbon">PROPOSTA</div><span class="plan-title">INVESTIDOR</span><h3>Pro</h3><div class="price">R$ 19,90 <small>/mês</small></div><p>Para quem precisa de alertas mais avançados.</p><ul><li>Tudo do gratuito</li><li>Alertas por e-mail e Telegram</li><li>Filtros por valor</li><li>Histórico ampliado</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
  <article class="plan"><span class="plan-title">INTELLIGENCE</span><h3>Advanced</h3><div class="price">R$ 49,90 <small>/mês</small></div><p>Para análise contínua de movimentações.</p><ul><li>Tudo do Pro</li><li>Carteiras personalizadas</li><li>Exportação de relatórios</li><li>Alertas e regras avançadas</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
  </div>
+ </div>
+ <div class="waitlist">
+   <div class="waitlist-description"><span class="section-kicker">ACESSO ANTECIPADO</span><h3>Quer ser avisado quando os alertas Pro estiverem disponíveis?</h3><p>Cadastre seu e-mail para receber informações sobre o lançamento. Sem compromisso de compra.</p></div>
+   <form id="waitlistForm" class="waitlist-form">
+    <div class="waitlist-fields"><label><span>Seu e-mail</span><input name="email" type="email" required maxlength="200" autocomplete="email" placeholder="seuemail@exemplo.com"></label>
+    <label><span>Plano de interesse</span><select name="plan"><option value="pro">Pro — R$ 19,90/mês</option><option value="advanced">Advanced — R$ 49,90/mês</option></select></label></div>
+    <label class="consent"><input name="consent" type="checkbox" required> Autorizo contato por e-mail sobre o lançamento do ChainWatch. Meus dados não serão exibidos publicamente.</label>
+    <label class="visually-hidden">Empresa<input name="company" type="text" tabindex="-1" autocomplete="off"></label>
+    <button type="submit" class="btn btn-primary">Entrar na lista de interesse ↗</button>
+    <p id="waitlistStatus" class="waitlist-status" role="status"></p>
+   </form>
+ </div>
  </div></section>
 
 <section class="sources container" id="fontes">
