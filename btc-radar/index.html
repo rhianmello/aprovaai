@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#070b15">
 <title>ChainWatch — Radar de Bitcoin | Movimentações on-chain</title>
-<meta name="description" content="Acompanhe 19 endereços de Bitcoin ligados ao ataque à Binance em 2026. Consulta on-chain programada a cada 2 minutos, com eventos auditáveis.">
+<meta name="description" content="Acompanhe 19 endereços de Bitcoin ligados ao ataque à Binance em 2026. Consulta on-chain programada a cada 10 segundos, com eventos auditáveis.">
 <meta property="og:type" content="website"><meta property="og:title" content="ChainWatch — Radar BTC"><meta property="og:description" content="Rastreamento público de movimentações em 19 carteiras de Bitcoin. Dados on-chain com origem verificável.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
     <h1>O blockchain não dorme. <span>Seu radar também não.</span></h1>
     <p>Acompanhe os <strong>19 endereços de Bitcoin</strong> relacionados ao ataque de outubro de 2026. Cada movimentação de saída é registrada, com transação verificável no explorador.</p>
     <div class="hero-actions"><a class="btn btn-primary" href="#radar">Explorar movimentações <span>↗</span></a><a class="btn btn-ghost" href="#entenda">Entenda o monitoramento <span>→</span></a></div>
-    <div class="hero-trust"><span>◉ Monitoramento agendado a cada 2 min</span><span>◉ Fontes on-chain verificáveis</span><span>◉ Dados públicos</span></div>
+    <div class="hero-trust"><span>◉ Monitoramento agendado a cada 10 segundos</span><span>◉ Fontes on-chain verificáveis</span><span>◉ Dados públicos</span></div>
   </div>
   <div class="hero-art" aria-label="Visualização ilustrativa do radar de transações">
     <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
@@ -47,13 +47,13 @@
 </section>
 
 <section class="monitor-section container" id="radar">
- <div class="section-intro"><div><div class="section-kicker">01 / INTELLIGENCE TERMINAL</div><h2>Radar <span>on-chain</span></h2><p>Acompanhe os saldos e as saídas dos endereços observados. Atualização da página a cada 2 minutos.</p></div>
+ <div class="section-intro"><div><div class="section-kicker">01 / INTELLIGENCE TERMINAL</div><h2>Radar <span>on-chain</span></h2><p>Acompanhe os saldos e as saídas dos endereços observados. Atualização da página a cada 10 segundos.</p></div>
    <div class="monitor-controls"><span class="sync-chip" id="syncChip"><i></i><span id="syncText">Conectando...</span></span><button id="refreshBtn" class="outline-button" type="button">↻ Atualizar agora</button></div>
  </div>
  <div class="notice" id="notice" role="status">Estabelecendo conexão com as fontes de dados...</div>
  <div class="terminal">
    <div class="terminal-head"><div class="terminal-tabs" role="tablist" aria-label="Visualização do radar"><button type="button" id="tabWallets" role="tab" aria-selected="true" class="active">◈ Carteiras <span>19</span></button><button type="button" id="tabEvents" role="tab" aria-selected="false">↗ Transações <span id="eventsTabCount">—</span></button></div>
-    <div class="terminal-tools"><label for="walletSearch" class="visually-hidden">Buscar endereço</label><input id="walletSearch" autocomplete="off" placeholder="Buscar carteira..." aria-label="Buscar carteira"/><span class="timer">Próxima atualização <b id="countdown">02:00</b></span></div>
+    <div class="terminal-tools"><label for="walletSearch" class="visually-hidden">Buscar endereço</label><input id="walletSearch" autocomplete="off" placeholder="Buscar carteira..." aria-label="Buscar carteira"/><span class="timer">Próxima atualização <b id="countdown">00:10</b></span></div>
    </div>
    <div id="walletsPanel" role="tabpanel" aria-labelledby="tabWallets">
     <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>ENDEREÇO BTC</th><th>MONTANTE INICIAL</th><th>SALDO OBSERVADO</th><th>STATUS</th><th>EXPLORADOR</th></tr></thead><tbody id="walletRows"><tr><td colspan="6" class="loading">Carregando dados auditáveis da blockchain...</td></tr></tbody></table></div>
@@ -79,7 +79,7 @@
 <section class="plans-section" id="planos"><div class="container">
  <div class="section-intro center"><div><div class="section-kicker">03 / ACESSO</div><h2>Inteligência para cada perfil.</h2><p>O painel público é gratuito. Os planos pagos abaixo são uma proposta futura — ainda não estão à venda.</p></div></div>
  <div class="plans">
- <article class="plan"><span class="plan-title">EXPLORADOR</span><h3>Gratuito</h3><div class="price">R$ 0 <small>/mês</small></div><p>Para acompanhar o caso publicamente.</p><ul><li>19 endereços</li><li>Saldo e histórico</li><li>Verificações a cada 2 minutos</li><li>Links dos exploradores</li></ul><a href="#radar" class="btn btn-plan">Usar gratuitamente ↗</a></article>
+ <article class="plan"><span class="plan-title">EXPLORADOR</span><h3>Gratuito</h3><div class="price">R$ 0 <small>/mês</small></div><p>Para acompanhar o caso publicamente.</p><ul><li>19 endereços</li><li>Saldo e histórico</li><li>Verificações a cada 10 segundos</li><li>Links dos exploradores</li></ul><a href="#radar" class="btn btn-plan">Usar gratuitamente ↗</a></article>
  <article class="plan featured"><div class="ribbon">PROPOSTA</div><span class="plan-title">INVESTIDOR</span><h3>Pro</h3><div class="price">R$ 19,90 <small>/mês</small></div><p>Para quem precisa de alertas mais avançados.</p><ul><li>Tudo do gratuito</li><li>Alertas por e-mail e Telegram</li><li>Filtros por valor</li><li>Histórico ampliado</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
  <article class="plan"><span class="plan-title">INTELLIGENCE</span><h3>Advanced</h3><div class="price">R$ 49,90 <small>/mês</small></div><p>Para análise contínua de movimentações.</p><ul><li>Tudo do Pro</li><li>Carteiras personalizadas</li><li>Exportação de relatórios</li><li>Alertas e regras avançadas</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
  </div>
