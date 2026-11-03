@@ -11,7 +11,7 @@
 <style>
 :root{color-scheme:dark;--bg:#06100b;--surface:#091a11;--surface2:#0d2117;--line:#1d4630;--muted:#91ac98;--text:#f2fff5;--green:#62e38d;--teal:#56e0c1;--amber:#ffd180;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 830px 510px at 78% -13%,#164d2e 0,transparent 72%),radial-gradient(ellipse 640px 400px at 5% 60%,#10322440 0,transparent 78%),var(--bg);color:var(--text)}
-a{color:inherit;text-decoration:none}button,input{font:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--green);outline-offset:4px}[hidden]{display:none!important}
+a{color:inherit;text-decoration:none}button,input{font:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--green);outline-offset:4px}[hidden]{display:none!important}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 header{position:sticky;top:0;z-index:5;border-bottom:1px solid #21432e;background:#07130cde;backdrop-filter:blur(16px)}
 .header-inner{max-width:1450px;margin:auto;padding:15px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .brand{display:inline-flex;align-items:center;gap:10px;font-size:21px;font-weight:950;letter-spacing:-.07em;white-space:nowrap}
@@ -80,10 +80,10 @@ footer a{color:#8be5a7;text-decoration:underline;text-underline-offset:3px}
    <p class="lead">O mapa dos sites, aplicativos e ferramentas que estão sendo desenvolvidos. Encontre cada projeto, acompanhe sua organização e abra diretamente o endereço publicado.</p></div>
   <div class="hero-stats"><div class="stat"><strong id="statProjects">12</strong><span>ACESSOS CATALOGADOS</span></div><div class="stat"><strong>3</strong><span>CATEGORIAS</span></div><div class="stat"><strong>✓</strong><span>LINKS VERIFICADOS</span></div></div>
  </div>
- <div class="tools" role="search"><label class="search" for="projectSearch">
+ <div class="tools" role="search"><div class="search"><label class="sr-only" for="projectSearch">Buscar projetos</label>
    <svg width="19" height="19" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
    <input id="projectSearch" type="search" autocomplete="off" placeholder="Buscar projeto, site ou ferramenta..." aria-label="Buscar projetos"/>
-   <span class="clear" id="clearSearch" aria-hidden="true">✕</span></label>
+   <button class="clear" id="clearSearch" type="button" aria-label="Limpar busca">✕</button></div>
    <div class="filters" role="group" aria-label="Filtrar categorias">
     <button class="filter active" type="button" data-filter="all" aria-pressed="true">Todos</button>
     <button class="filter" type="button" data-filter="nospassa" aria-pressed="false">Nós Passa</button>
