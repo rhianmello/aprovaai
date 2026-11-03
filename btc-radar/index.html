@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070b15">
+<title>ChainWatch — Radar de Bitcoin | Movimentações on-chain</title>
+<meta name="description" content="Acompanhe 19 endereços de Bitcoin ligados ao ataque à Binance em 2026. Consulta on-chain programada a cada 2 minutos, com eventos auditáveis.">
+<meta property="og:type" content="website"><meta property="og:title" content="ChainWatch — Radar BTC"><meta property="og:description" content="Rastreamento público de movimentações em 19 carteiras de Bitcoin. Dados on-chain com origem verificável.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+<div class="banner"><span class="banner-dot"></span> Dados públicos da blockchain Bitcoin · Projeto independente · Não afiliado à Binance</div>
+<header class="site-header container">
+  <a class="logo" href="#inicio" aria-label="ChainWatch início"><span class="logo-symbol">◈</span> CHAIN<span>WATCH</span><small>BTC INTELLIGENCE</small></a>
+  <nav aria-label="Navegação"><a href="#radar">Monitor ao vivo</a><a href="#entenda">Como funciona</a><a href="#planos">Planos</a></nav>
+  <a class="nav-cta" href="#radar">Abrir radar <span>↗</span></a>
+</header>
+<main>
+<section class="hero container" id="inicio">
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="pulse-dot"></span> RASTREAMENTO BLOCKCHAIN <span class="eyebrow-separator">/</span> CASO BINANCE 2026</div>
+    <h1>O blockchain não dorme. <span>Seu radar também não.</span></h1>
+    <p>Acompanhe os <strong>19 endereços de Bitcoin</strong> relacionados ao ataque de outubro de 2026. Cada movimentação de saída é registrada, com transação verificável no explorador.</p>
+    <div class="hero-actions"><a class="btn btn-primary" href="#radar">Explorar movimentações <span>↗</span></a><a class="btn btn-ghost" href="#entenda">Entenda o monitoramento <span>→</span></a></div>
+    <div class="hero-trust"><span>◉ Monitoramento agendado a cada 2 min</span><span>◉ Fontes on-chain verificáveis</span><span>◉ Dados públicos</span></div>
+  </div>
+  <div class="hero-art" aria-label="Visualização ilustrativa do radar de transações">
+    <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
+    <div class="crosshair horizontal"></div><div class="crosshair vertical"></div>
+    <div class="orbit-point point-a"></div><div class="orbit-point point-b"></div><div class="orbit-point point-c"></div><div class="orbit-point point-d"></div>
+    <div class="radar-sweep"></div>
+    <div class="radar-center"><span>₿</span><small>BTC NETWORK</small></div>
+    <div class="floating-label label-top"><span class="mini-light"></span> 19 ENDEREÇOS</div>
+    <div class="floating-label label-bottom">ON-CHAIN <span>●</span> OPEN DATA</div>
+    <div class="radar-footnote">Visualização ilustrativa · não representa transferências reais</div>
+  </div>
+</section>
+
+<section class="metrics container" aria-label="Indicadores de monitoramento">
+ <div class="metric"><div class="metric-title">BTC IDENTIFICADOS ORIGINALMENTE <span>↗</span></div><strong>18.270,20 <em>BTC</em></strong><small>Montante inicial informado na investigação</small></div>
+ <div class="metric"><div class="metric-title">ENDEREÇOS MONITORADOS <span>◈</span></div><strong id="walletCount">19</strong><small>Carteiras públicas rastreadas</small></div>
+ <div class="metric"><div class="metric-title">SAÍDAS DETECTADAS <span>↗</span></div><strong id="eventCount">—</strong><small>Eventos conhecidos pelo rastreador</small></div>
+ <div class="metric"><div class="metric-title">ÚLTIMA CHECAGEM <span>◷</span></div><strong class="small-metric" id="lastCheck">Aguardando</strong><small id="checkDetail">Conectando ao monitor</small></div>
+</section>
+
+<section class="monitor-section container" id="radar">
+ <div class="section-intro"><div><div class="section-kicker">01 / INTELLIGENCE TERMINAL</div><h2>Radar <span>on-chain</span></h2><p>Acompanhe os saldos e as saídas dos endereços observados. Atualização da página a cada 2 minutos.</p></div>
+   <div class="monitor-controls"><span class="sync-chip" id="syncChip"><i></i><span id="syncText">Conectando...</span></span><button id="refreshBtn" class="outline-button" type="button">↻ Atualizar agora</button></div>
+ </div>
+ <div class="notice" id="notice" role="status">Estabelecendo conexão com as fontes de dados...</div>
+ <div class="terminal">
+   <div class="terminal-head"><div class="terminal-tabs" role="tablist" aria-label="Visualização do radar"><button type="button" id="tabWallets" role="tab" aria-selected="true" class="active">◈ Carteiras <span>19</span></button><button type="button" id="tabEvents" role="tab" aria-selected="false">↗ Transações <span id="eventsTabCount">—</span></button></div>
+    <div class="terminal-tools"><label for="walletSearch" class="visually-hidden">Buscar endereço</label><input id="walletSearch" autocomplete="off" placeholder="Buscar carteira..." aria-label="Buscar carteira"/><span class="timer">Próxima atualização <b id="countdown">02:00</b></span></div>
+   </div>
+   <div id="walletsPanel" role="tabpanel" aria-labelledby="tabWallets">
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>ENDEREÇO BTC</th><th>MONTANTE INICIAL</th><th>SALDO OBSERVADO</th><th>STATUS</th><th>EXPLORADOR</th></tr></thead><tbody id="walletRows"><tr><td colspan="6" class="loading">Carregando dados auditáveis da blockchain...</td></tr></tbody></table></div>
+   </div>
+   <div id="eventsPanel" role="tabpanel" aria-labelledby="tabEvents" hidden>
+      <div class="events-head"><div><strong>Histórico de saídas</strong><p>Eventos identificados nos endereços rastreados. Destinos são saídas de transação, não atribuição de identidade.</p></div></div>
+      <div id="eventRows" class="event-list"><div class="empty-state">Aguardando consulta de transações.</div></div>
+   </div>
+   <div class="terminal-footer"><span><i class="green-dot"></i> Mempool.space como fonte principal; Blockstream como alternativa</span><span id="terminalStatus">Sem verificação concluída</span></div>
+ </div>
+ <div class="alert-strip"><div class="alert-left"><span class="alert-icon">♧</span><div><strong>Alertas desta página</strong><p>Receba uma notificação no navegador quando surgir uma nova saída enquanto a página estiver aberta. Não substitui alertas em segundo plano.</p></div></div><button type="button" id="notifyBtn" class="outline-button">Ativar alertas locais</button></div>
+</section>
+
+<section class="features container" id="entenda">
+  <div class="section-intro center"><div><div class="section-kicker">02 / COMO FUNCIONA</div><h2>Dados, não especulação.</h2><p>Transparência sobre o que é observado e quais são os limites.</p></div></div>
+  <div class="features-grid">
+   <article class="feature"><div class="feature-icon">◎</div><div class="feature-no">01 /</div><h3>Verificação on-chain</h3><p>Consultas agendadas aos exploradores Bitcoin verificam saídas confirmadas ou pendentes. Falhas na consulta não são tratadas como ausência de transações.</p></article>
+   <article class="feature"><div class="feature-icon">↗</div><div class="feature-no">02 /</div><h3>Transações auditáveis</h3><p>Cada evento exibe seu identificador, valor movimentado, confirmação e link para conferência independente.</p></article>
+   <article class="feature"><div class="feature-icon">⌁</div><div class="feature-no">03 /</div><h3>Sem falsos alarmes</h3><p>Recebimentos de valores pequenos não são tratados como saídas. O sistema evita repetir o mesmo evento e separa status confirmado de pendente.</p></article>
+  </div>
+</section>
+
+<section class="plans-section" id="planos"><div class="container">
+ <div class="section-intro center"><div><div class="section-kicker">03 / ACESSO</div><h2>Inteligência para cada perfil.</h2><p>O painel público é gratuito. Os planos pagos abaixo são uma proposta futura — ainda não estão à venda.</p></div></div>
+ <div class="plans">
+ <article class="plan"><span class="plan-title">EXPLORADOR</span><h3>Gratuito</h3><div class="price">R$ 0 <small>/mês</small></div><p>Para acompanhar o caso publicamente.</p><ul><li>19 endereços</li><li>Saldo e histórico</li><li>Verificações a cada 2 minutos</li><li>Links dos exploradores</li></ul><a href="#radar" class="btn btn-plan">Usar gratuitamente ↗</a></article>
+ <article class="plan featured"><div class="ribbon">PROPOSTA</div><span class="plan-title">INVESTIDOR</span><h3>Pro</h3><div class="price">R$ 19,90 <small>/mês</small></div><p>Para quem precisa de alertas mais avançados.</p><ul><li>Tudo do gratuito</li><li>Alertas por e-mail e Telegram</li><li>Filtros por valor</li><li>Histórico ampliado</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
+ <article class="plan"><span class="plan-title">INTELLIGENCE</span><h3>Advanced</h3><div class="price">R$ 49,90 <small>/mês</small></div><p>Para análise contínua de movimentações.</p><ul><li>Tudo do Pro</li><li>Carteiras personalizadas</li><li>Exportação de relatórios</li><li>Alertas e regras avançadas</li></ul><button type="button" disabled class="btn btn-plan">Em desenvolvimento</button></article>
+ </div>
+ </div></section>
+
+<section class="sources container" id="fontes">
+  <div><div class="section-kicker">04 / VERIFICAÇÃO</div><h2>Fontes e transparência</h2><p>Informações públicas verificáveis. O vínculo investigativo dos endereços decorre de fontes externas; este site não é uma autoridade investigativa nem uma recomendação de investimento.</p></div>
+  <div class="sources-links"><a href="https://www.fbi.gov/investigate/cyber/alerts/2026/north-korea-responsible-for-6-billion-binance-attack" target="_blank" rel="noopener noreferrer"><span>COMUNICADO</span><strong>FBI — TraderTraitor</strong><b>↗</b></a><a href="https://www.coindesk.com/markets/2026/10/30/binance-hacker-splits-usd1-4-billion-of-bitcoin-into-19-wallets-that-no-one-can-freeze" target="_blank" rel="noopener noreferrer"><span>REPORTAGEM</span><strong>CoinDesk — 19 endereços</strong><b>↗</b></a><a href="https://mempool.space" target="_blank" rel="noopener noreferrer"><span>EXPLORADOR</span><strong>Mempool.space</strong><b>↗</b></a></div>
+</section>
+</main>
+<footer><div class="container footer-in"><div class="logo"><span class="logo-symbol">◈</span> CHAIN<span>WATCH</span><small>RADAR BTC · 2026</small></div><p>Projeto independente, para fins informativos. Não associado à Binance, ao FBI nem a empresas de análise forense. Nada aqui constitui aconselhamento financeiro.</p><a href="#inicio">Voltar ao topo ↑</a></div></footer>
+<script src="./app.js" defer></script>
+</body>
+</html>
