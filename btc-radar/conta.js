@@ -181,6 +181,7 @@ $("loginForm").addEventListener("submit",async e=>{
     });
     if(error)throw error;
     form.reset();
+    if(data.session){window.location.assign("./app/");return;}
     await applySession(data.session);
   }catch(err){notify(errorText(err),"error");}
   finally{setBusy(form,false);}
@@ -199,7 +200,7 @@ $("signupForm").addEventListener("submit",async e=>{
     });
     if(error)throw error;
     form.reset();
-    if(data.session){await applySession(data.session);}
+    if(data.session){window.location.assign("./app/");return;}
     else {
       mode("login");
       status.dataset.keep="1";
