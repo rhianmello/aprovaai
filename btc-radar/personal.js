@@ -4,7 +4,7 @@ const sb=createClient(BASE,"sb_publishable_Lh0A_Ykm2h66ur3LojJKTQ_JdUVMK9d",{aut
 const $=id=>document.getElementById(id),panel=$("meu-radar"),cards=$("personalWallets"),nav=$("accountNavLink");
 const fmt=new Intl.NumberFormat("pt-BR",{maximumFractionDigits:8});
 const btc=x=>x==null?"—":fmt.format(Number(x)/1e8)+" BTC";
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;":"&quot;","'":"&#39;"}[c]));
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const when=s=>{if(!s)return "Sem data";const d=new Date(s);return Number.isNaN(d.getTime())?"Sem data":new Intl.DateTimeFormat("pt-BR",{timeZone:"America/Sao_Paulo",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(d)};
 const short=s=>s.slice(0,14)+"…"+s.slice(-12);
 let accountId=null,token=null,rows=[],generation=0,busy=false,lastFetched=0;
