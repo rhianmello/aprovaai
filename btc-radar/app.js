@@ -125,3 +125,25 @@ $("notifyBtn").addEventListener("click",async()=>{
 });
 setInterval(()=>{if(timeToRefresh>0)timeToRefresh--;else refresh();showCountdown();},1000);
 showCountdown();refresh();
+$("waitlistForm").addEventListener("submit",async function(ev){
+ ev.preventDefault();
+ const form=ev.currentTarget,submit=form.querySelector("button[type=submit]");
+ const status=$("waitlistStatus");
+ const values=new FormData(form);
+ status.textContent="Registrando interesse...";status.classList.remove("error");
+ submit.disabled=true;
+ try{
+   const response=await fetch("https://ztqtcbzjesrkuaijmylm.supabase.co/functions/v1/btc-radar-waitlist",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      email:String(values.get("email")||"").trim(),plan:String(values.get("plan")||"pro"),
+      consent:values.get("consent")==="on",company:String(values.get("company")||"")
+    }),signal:AbortSignal.timeout(15000)
+   });
+   const result=await response.json();
+   if(!response.ok||!result.ok)throw Error(result.error||"Erro no envio.");
+   status.textContent="Recebemos seu interesse. O envio de e-mails começará quando o serviço for lançado.";
+   form.reset();
+ }catch(err){status.textContent="Não foi possível registrar: "+String(err.message||err);status.classList.add("error")}
+ finally{submit.disabled=false}
+});
