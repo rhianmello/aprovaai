@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self'; connect-src 'self' https://ztqtcbzjesrkuaijmylm.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<title>IR Ações • Auditoria de investimentos</title>
+<meta name="description" content="Área privada para organizar extratos e conferir a apuração de operações comuns em ações brasileiras.">
+<link rel="stylesheet" href="./style.css">
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.10/dist/umd/supabase.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="./app.js"></script>
+</head>
+<body>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="auth-screen" class="auth-shell">
+  <div class="auth-info">
+    <div class="logo"><span class="logo-mark">◈</span> IR<span> AÇÕES</span><small>CONTROLE FISCAL</small></div>
+    <div class="eyebrow">ORGANIZAÇÃO • CONFERÊNCIA • RASTREABILIDADE</div>
+    <h1>Seus investimentos.<br><em>Seus números.</em><br>Sem suposições.</h1>
+    <p>Importe operações, organize custos de aquisição e visualize uma simulação fiscal com alertas de dados ausentes. Cada usuário vê apenas os seus documentos.</p>
+    <div class="pillrow"><span>🔒 Documentos privados</span><span>◷ Histórico por ano</span><span>▥ Exportação de relatórios</span></div>
+    <div class="auth-note">Ferramenta de apoio ao contribuinte e ao contador. Não substitui conciliação de notas, DARFs, proventos e demais eventos societários.</div>
+  </div>
+  <div class="auth-form panel">
+    <div class="top-kicker">ÁREA SEGURA</div>
+    <h2>Entrar no painel</h2>
+    <p>Use uma conta própria para proteger suas informações financeiras.</p>
+    <form id="auth-form">
+      <label>E-mail<input id="email" type="email" required autocomplete="email" placeholder="voce@exemplo.com"></label>
+      <label>Senha<input id="password" type="password" minlength="6" required autocomplete="current-password" placeholder="Sua senha"></label>
+      <button id="login-button" type="submit" class="btn primary wide">Entrar</button>
+      <button id="signup-button" type="button" class="btn muted wide">Criar uma conta</button>
+    </form>
+    <div id="auth-message" class="helper" role="status" aria-live="polite"></div>
+    <p class="security">Os dados são isolados por usuário no Supabase. Não compartilhe sua senha com terceiros.</p>
+  </div>
+</div>
+<div id="app-screen" class="app-shell" hidden>
+  <aside class="sidebar">
+    <a href="./" class="logo small"><span class="logo-mark">◈</span> IR<span> AÇÕES</span></a>
+    <div class="side-label">PAINEL DO INVESTIDOR</div>
+    <nav class="side-nav" aria-label="Módulos">
+      <button class="navitem active" data-section="resumo">▦ <span>Visão geral</span></button>
+      <button class="navitem" data-section="importacao">⇧ <span>Importar extratos</span></button>
+      <button class="navitem" data-section="operacoes">↔ <span>Operações</span></button>
+      <button class="navitem" data-section="patrimonio">▤ <span>Posições e custo</span></button>
+      <button class="navitem" data-section="relatorios">▧ <span>Relatórios</span></button>
+    </nav>
+    <div class="side-bottom"><div class="shield">◎ <span>Banco com RLS<br><strong>Dados restritos ao titular</strong></span></div><a class="back" href="/modulos.html">← Central de projetos</a></div>
+  </aside>
+  <div class="content">
+    <header class="topbar">
+      <div><div class="eyebrow dark">MÓDULO DE INVESTIMENTOS</div><h1 id="page-title">Visão geral</h1></div>
+      <div class="top-actions"><label class="year-label">Ano-base <select id="year-select" aria-label="Ano-base"></select></label><div id="user-chip" class="user-chip"></div><button id="logout" class="btn muted small-btn">Sair</button></div>
+    </header>
+    <main class="main">
+      <div class="banner" id="audit-banner"><strong>Simulação para conferência.</strong> Valores não equivalem necessariamente ao imposto a recolher. As operações dependem de um histórico completo e da validação do contador.</div>
+      <section id="section-resumo" class="app-section">
+        <div class="section-top"><div><h2>Panorama fiscal</h2><p>Consolidado das informações já cadastradas para o ano selecionado.</p></div><button class="btn outlined" id="refresh">↻ Atualizar</button></div>
+        <div class="kpis">
+          <article class="metric"><div class="metric-label">Custo em carteira no fim do ano <span>▤</span></div><strong id="kpi-patrimonio">—</strong><small>Preço médio, não cotação de mercado</small></article>
+          <article class="metric"><div class="metric-label">Total de vendas no ano <span>↗</span></div><strong id="kpi-vendas">—</strong><small>Ações à vista / operações comuns</small></article>
+          <article class="metric"><div class="metric-label">Resultado tributável estimado <span>◷</span></div><strong id="kpi-resultado">—</strong><small>Após prejuízos rastreados no histórico</small></article>
+          <article class="metric highlight"><div class="metric-label">IR bruto estimado <span>◈</span></div><strong id="kpi-ir">—</strong><small>Sem IRRF, DARFs pagos ou outras deduções</small></article>
+        </div>
+        <div class="layout2">
+          <div class="panel panel-pad"><div class="section-top compact"><div><h3>Apuração mensal</h3><p>Vendas, ganhos e estimativa do IR a 15%.</p></div></div><div class="tablewrap"><table><thead><tr><th>Mês</th><th>Vendas</th><th>Resultado</th><th>Ganho isento</th><th>Base estimada</th><th>IR bruto</th></tr></thead><tbody id="monthly-body"></tbody></table></div></div>
+          <div class="stack">
+            <div class="panel panel-pad"><h3>Conferência automática</h3><p class="subtext">Inconsistências que impedem uma conclusão segura.</p><div id="issues" class="issues"></div></div>
+            <div class="panel panel-pad"><h3>Próximo passo</h3><p class="subtext">Comece com a planilha de negociações e, se já possuía ações antes do período, informe a posição inicial com custo histórico.</p><button class="btn primary wide" data-go="importacao">Importar documento →</button></div>
+          </div>
+        </div>
+      </section>
+      <section id="section-importacao" class="app-section" hidden>
+        <div class="section-top"><div><h2>Documentos da corretora</h2><p>Arquivos salvos em armazenamento privado. CSV e Excel podem gerar lançamentos; PDF fica arquivado para conferência.</p></div></div>
+        <div class="uploadbox panel">
+          <div class="upload-icon">⇧</div><h3>Enviar extrato ou notas</h3>
+          <p>CSV, XLS, XLSX ou PDF, até 12 MB. Antes do processamento, confira as colunas e o período.</p>
+          <label class="btn primary file-btn" for="upload-file">Selecionar arquivo</label>
+          <input id="upload-file" type="file" accept=".csv,.xls,.xlsx,.pdf" hidden>
+          <div class="helper" id="import-message"></div>
+        </div>
+        <div id="mapper" class="panel panel-pad" hidden>
+          <h3>Mapear colunas do arquivo</h3><p class="subtext">Selecione apenas negociações efetivas; movimentações bancárias, dividendos e transferências não são compras/vendas.</p>
+          <div id="mapping-fields" class="mapping"></div>
+          <div class="tablewrap"><table><thead id="preview-head"></thead><tbody id="preview-body"></tbody></table></div>
+          <div class="form-actions"><button id="cancel-mapping" class="btn muted">Cancelar</button><button id="confirm-import" class="btn primary">Conferir e salvar operações</button></div>
+          <div id="mapping-status" class="helper"></div>
+        </div>
+        <div class="panel panel-pad"><div class="section-top compact"><div><h3>Arquivos enviados</h3><p>Abra o original ou remova o documento e suas operações importadas.</p></div></div><div class="tablewrap"><table><thead><tr><th>Documento</th><th>Data</th><th>Tipo</th><th>Operações</th><th>Estado</th><th>Ações</th></tr></thead><tbody id="uploads-body"></tbody></table></div></div>
+      </section>
+      <section id="section-operacoes" class="app-section" hidden>
+        <div class="section-top"><div><h2>Livro de operações</h2><p>Cadastre, confira e remova operações incorretas. Day trade e outros ativos são destacados fora do cálculo básico.</p></div></div>
+        <div class="panel panel-pad"><h3>Adicionar operação manual</h3>
+          <form id="trade-form" class="form-grid">
+            <label>Data<input name="trade_date" type="date" required></label>
+            <label>Ativo<input name="ticker" placeholder="PETR4" maxlength="12" required></label>
+            <label>Operação<select name="side"><option value="C">Compra</option><option value="V">Venda</option></select></label>
+            <label>Quantidade<input name="qty" type="number" step="any" min=".00000001" required></label>
+            <label>Preço unitário (R$)<input name="price" type="number" step="any" min="0" required></label>
+            <label>Taxas da operação (R$)<input name="fees" type="number" step="any" min="0" value="0" required></label>
+            <label>Modalidade<select name="trade_mode"><option value="COMUM">Operação comum</option><option value="DAYTRADE">Day trade — revisão</option><option value="OUTROS">Outro tipo — revisão</option></select></label>
+            <button type="submit" class="btn primary align-end">Salvar operação</button>
+          </form>
+        </div>
+        <div class="panel panel-pad"><div class="section-top compact"><div><h3>Operações registradas</h3><p id="trade-count" class="subtext"></p></div><input id="trade-filter" placeholder="Filtrar por ativo..." class="filter-input" aria-label="Filtrar operações"></div><div class="tablewrap"><table><thead><tr><th>Data</th><th>Ativo</th><th>Movimento</th><th>Quantidade</th><th>Preço</th><th>Taxas</th><th>Modalidade</th><th></th></tr></thead><tbody id="trades-body"></tbody></table></div></div>
+      </section>
+      <section id="section-patrimonio" class="app-section" hidden>
+        <div class="section-top"><div><h2>Patrimônio e preço médio</h2><p>Posições históricas calculadas pelo custo de aquisição. Complete as posições anteriores à primeira negociação importada.</p></div></div>
+        <div class="panel panel-pad"><h3>Informar posição inicial</h3><p class="subtext">Utilize o saldo de ações e custo total na data do informe anterior. Não informe valor de mercado.</p>
+          <form id="opening-form" class="form-grid">
+            <label>Data-base<input name="as_of" type="date" required></label>
+            <label>Ativo<input name="ticker" maxlength="12" placeholder="VALE3" required></label>
+            <label>Quantidade<input name="qty" type="number" min=".00000001" step="any" required></label>
+            <label>Custo de aquisição total (R$)<input name="total_cost" type="number" min="0" step=".01" required></label>
+            <button type="submit" class="btn primary align-end">Adicionar posição</button>
+          </form>
+        </div>
+        <div class="panel panel-pad"><h3>Posições ao fim do ano</h3><div class="tablewrap"><table><thead><tr><th>Ativo</th><th>Quantidade</th><th>Preço médio</th><th>Custo a declarar</th></tr></thead><tbody id="positions-body"></tbody></table></div></div>
+        <div class="panel panel-pad"><h3>Saldos iniciais informados</h3><div class="tablewrap"><table><thead><tr><th>Data-base</th><th>Ativo</th><th>Quantidade</th><th>Custo total</th><th></th></tr></thead><tbody id="openings-body"></tbody></table></div></div>
+      </section>
+      <section id="section-relatorios" class="app-section" hidden>
+        <div class="section-top"><div><h2>Relatório para o contador</h2><p>Exporte a memória preliminar de cálculo ou imprima em PDF a visão geral.</p></div></div>
+        <div class="panel panel-pad reportbox">
+          <h3>Apuração anual • <span id="report-year"></span></h3>
+          <p>O relatório contém o resultado mensal das operações comuns de ações incluídas no sistema, com seus limites e alertas. Não contém dados de declarações transmitidas à Receita.</p>
+          <div class="reportactions"><button id="export-csv" class="btn primary">↓ Baixar CSV da apuração</button><button id="print-report" class="btn outlined">⎙ Imprimir / salvar PDF</button></div>
+          <div id="report-warning" class="audit-warning"></div>
+        </div>
+        <div class="panel panel-pad"><h3>O que ainda é necessário conferir?</h3><p class="subtext">Informe de rendimentos, eventos societários, proventos, IRRF, DARFs pagos, prejuízos acumulados anteriores e eventual declaração original. Operações de day trade, FII, ETF, BDR, opções e exterior exigem tratamento próprio. A apuração só é confiável com histórico completo de compras e vendas.</p><a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/isencoes" target="_blank" rel="noopener noreferrer" class="official">Consultar regra oficial de isenção ↗</a></div>
+      </section>
+    </main>
+  </div>
+</div>
+</body></html>
