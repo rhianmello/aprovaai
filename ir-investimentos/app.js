@@ -446,8 +446,8 @@
     lines.push([],["Ativo","Quantidade em 31/12","Preço médio (R$)","Custo a declarar (R$)"]);
     calc.positions.forEach(p=>lines.push([p.ticker,p.qty.toString(),(p.cost/p.qty).toFixed(4),p.cost.toFixed(2)]));
     const csv="\uFEFF"+lines.map(r=>r.map(x=>'"'+String(x??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
-    const a=document.createElement("a"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
-    a.href=url;a.download="apuracao_ir_acoes_"+currentYear+".csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+    const a=document.createElement("a"),url=window.URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+    a.href=url;a.download="apuracao_ir_acoes_"+currentYear+".csv";document.body.append(a);a.click();a.remove();setTimeout(()=>window.URL.revokeObjectURL(url),3000);
   }
   init().catch(e=>fatal("Erro inicial: "+errorMessage(e)));
 })();
