@@ -185,7 +185,7 @@
         await uploadDocument(file,"PDF",[],"arquivado");el("import-message").textContent="PDF guardado para conferência. Para calcular, importe as negociações em planilha.";return;
       }
       let rows;
-      if(ext==="csv")rows=csvRows(await file.text());
+      if(ext==="csv"){const bytes=await file.arrayBuffer();let s=new TextDecoder("utf-8").decode(bytes);if((s.match(/�/g)||[]).length>2)s=new TextDecoder("windows-1252").decode(bytes);rows=csvRows(s);}
       else{
         if(!window.XLSX)throw new Error("Leitor Excel não carregado. Atualize a página e tente novamente.");
         const wb=window.XLSX.read(await file.arrayBuffer(),{type:"array"});
@@ -337,7 +337,7 @@
     let stockTrades=trades.filter(t=>t.trade_date<=end&&t.trade_mode==="COMUM"&&isStock(t.ticker));
     let selected=trades.filter(t=>t.trade_date>=start&&t.trade_date<=end);
     let odd=selected.filter(t=>t.trade_mode!=="COMUM"||!isStock(t.ticker));
-    if(odd.length)issues.push(odd.length+" operação(ões) fora do escopo: day trade, outros produtos ou ticker não reconhecido. Revisar separadamente.");
+    if(odd.length)critical.push(odd.length+" operação(ões) de day trade, ETFs, FIIs, BDRs ou outra modalidade fora do escopo. O IR total do ano não pode ser calculado apenas com esta simulação.");
     const openingMap=new Map();
     for(const o of openings.filter(o=>o.as_of<=end)){
       if(!isStock(o.ticker)){issues.push("Posição "+o.ticker+" exige classificação do ativo.");continue}
@@ -381,7 +381,7 @@
     if(uploadRows.some(u=>u.state==="revisao"))critical.push("Há arquivos importados com linhas ignoradas. Confira se são operações tributáveis.");
     if(uploadRows.some(u=>u.file_kind==="PDF"&&u.row_count===0))issues.push("PDF arquivado não foi convertido em operações. Confira se ele contém negociações ainda não importadas.");
     if(trades.length>=10000||uploadRows.length>=10000||openings.length>=10000)critical.push("Limite da consulta atingido; o histórico pode estar incompleto.");
-    if(!stockTrades.length&&openings.size===0)issues.push("Nenhuma operação comum com ações ou posição inicial cadastrada.");
+    if(!stockTrades.length&&openingMap.size===0)issues.push("Nenhuma operação comum com ações ou posição inicial cadastrada.");
     if(!trades.some(t=>t.trade_date<start)&&!openings.some(o=>o.as_of<start))issues.push("Sem histórico anterior ao ano-base. Compras antigas e prejuízos anteriores podem alterar a apuração.");
     if(!critical.length)issues.push("Antes de usar os valores, conferir IRRF, DARFs, dividendos/JCP, bonificações, grupamentos e prejuízos anteriores.");
     let lossCarry=0;
@@ -406,7 +406,7 @@
     if(!user)return;el("report-year").textContent=String(currentYear);
     calc=compute();
     const bad=calc.critical.length>0,hasData=trades.length||openings.length;
-    el("kpi-patrimonio").textContent=hasData?money(calc.total.position):"—";
+    el("kpi-patrimonio").textContent=hasData&&!bad?money(calc.total.position):"—";
     el("kpi-vendas").textContent=hasData?money(calc.total.sales):"—";
     el("kpi-resultado").textContent=hasData&&!bad?money(calc.total.base):"—";
     el("kpi-ir").textContent=hasData&&!bad?money(calc.total.tax):"—";
