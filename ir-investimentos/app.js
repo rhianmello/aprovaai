@@ -11,7 +11,7 @@
     {id:"qty",title:"Quantidade",aliases:["quantidade","qtd","qtde","quant","qt"]},
     {id:"price",title:"Preço por unidade",aliases:["preco unitario","preco","valor unitario","preco medio","preco do ativo"]},
     {id:"fees",title:"Taxas da nota (opcional)",aliases:["taxas","custos","emolumentos","corretagem","taxa","despesas"]},
-    {id:"mode",title:"Modalidade (opcional)",aliases:["modalidade","tipo de negociacao","day trade","tipo de operacao"]}
+    {id:"mode",title:"Modalidade (opcional)",aliases:["modalidade","mercado","operacao day trade","day trade"]}
   ];
   const el=id=>document.getElementById(id);
   const fmt=new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
@@ -151,7 +151,7 @@
   function parseMode(raw){
     let s=norm(raw);
     if(s.includes("day trade")||s.includes("daytrade"))return "DAYTRADE";
-    if(s&&s!=="comum"&&s!=="normal"&&s!=="swing trade"&&s!=="vista"&&s!=="operacao comum")return "OUTROS";
+    if(s&&s!=="comum"&&s!=="normal"&&s!=="swing trade"&&s!=="vista"&&s!=="a vista"&&s!=="mercado a vista"&&s!=="operacao comum")return "OUTROS";
     return "COMUM";
   }
   function guessSeparator(first){
