@@ -21,7 +21,7 @@
   const html=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
   const round2=n=>Math.round((n+Number.EPSILON)*100)/100;
-  let db,user=null,currentYear=new Date().getFullYear(),uploadRows=[],trades=[],openings=[],pending=null,calc=null,toastTimer=null,loading=false;
+  let db,user=null,currentYear=new Date().getFullYear(),uploadRows=[],trades=[],openings=[],snapshots=[],snapshotItems=[],initialBalances=[],pending=null,calc=null,toastTimer=null,loading=false;
   function toast(message,error=false){
     const box=el("toast");box.textContent=message;box.classList.toggle("error",error);box.hidden=false;
     if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{box.hidden=true},7000);
@@ -32,7 +32,7 @@
     const changed=user?.id!==account?.id;user=account||null;
     el("auth-screen").hidden=!!user;el("app-screen").hidden=!user;
     if(user){el("user-chip").textContent=user.email||"Conta";if(changed)refreshData();}
-    else{uploadRows=[];trades=[];openings=[];pending=null;calc=null;el("mapper").hidden=true;}
+    else{uploadRows=[];trades=[];openings=[];snapshots=[];snapshotItems=[];initialBalances=[];pending=null;calc=null;el("mapper").hidden=true;}
   }
   async function init(){
     if(!window.supabase?.createClient){fatal("Não foi possível carregar a conexão com o banco. Atualize a página e confira a internet.");return;}
@@ -86,6 +86,7 @@
     el("uploads-body").addEventListener("click",documentAction);
     el("trades-body").addEventListener("click",tradeAction);
     el("openings-body").addEventListener("click",openingAction);
+    el("portfolio-body").addEventListener("click",portfolioAction);
     el("trade-form").elements.trade_date.valueAsDate=new Date();
     const d=new Date(new Date().getFullYear()-1,11,31);
     el("opening-form").elements.as_of.value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
@@ -93,7 +94,7 @@
   function go(section){
     document.querySelectorAll("[data-section]").forEach(b=>b.classList.toggle("active",b.dataset.section===section));
     document.querySelectorAll(".app-section").forEach(s=>s.hidden=s.id!=="section-"+section);
-    const titles={resumo:"Visão geral",importacao:"Importar extratos",operacoes:"Livro de operações",patrimonio:"Posições e custo",relatorios:"Relatórios"};
+    const titles={resumo:"Visão geral",importacao:"Importar extratos",operacoes:"Livro de operações",patrimonio:"Posições e custo",carteira:"Valorização",relatorios:"Relatórios"};
     el("page-title").textContent=titles[section]||"IR Ações";
     window.scrollTo({top:0,behavior:"instant"});
   }
@@ -107,12 +108,15 @@
   async function refreshData(){
     if(!user||loading)return;loading=true;
     try{
-      const [u,t,o]=await Promise.all([
+      const [u,t,o,s,si,ib]=await Promise.all([
         readAll("ir_uploads","created_at"),
         readAll("ir_trades","trade_date"),
-        readAll("ir_opening_positions","as_of")
+        readAll("ir_opening_positions","as_of"),
+        readAll("ir_snapshots","reference_date"),
+        readAll("ir_snapshot_items","created_at"),
+        readAll("ir_initial_balances","as_of")
       ]);
-      uploadRows=u;trades=t;openings=o;renderAll();
+      uploadRows=u;trades=t;openings=o;snapshots=s;snapshotItems=si;initialBalances=ib;renderAll();
     }catch(err){toast("Falha ao consultar os dados: "+errorMessage(err),true)}
     finally{loading=false}
   }
@@ -135,7 +139,7 @@
     else return null;
     const d=new Date(s+"T12:00:00Z");return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===s?s:null;
   }
-  function isStock(ticker){return /^[A-Z]{4}[345678]$/.test(ticker)}
+  function isStock(ticker){return /^(?:[A-Z]{4}|[A-Z]\d[A-Z]{2})[345678]$/.test(ticker)}
   function parseTicker(raw){
     const m=String(raw??"").toUpperCase().match(/\b([A-Z]{4}\d{1,2})\b/);
     return m?m[1]:String(raw??"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
@@ -180,15 +184,43 @@
     el("import-message").textContent="Preparando "+file.name+"…";
     try{
       if(ext==="pdf"){
-        const ok=confirm("PDF será arquivado de forma privada, mas NÃO será convertido automaticamente em operações nesta versão. Para cálculos, utilize CSV/Excel ou lance as operações. Continuar?");
-        if(!ok){el("import-message").textContent="Upload cancelado.";return}
-        await uploadDocument(file,"PDF",[],"arquivado");el("import-message").textContent="PDF guardado para conferência. Para calcular, importe as negociações em planilha.";return;
+        let result;
+        try{result=await window.IRAdapters.readClearPDF(file)}
+        catch(err){
+          const ok=confirm("Não foi possível identificar automaticamente a posição Clear: "+errorMessage(err)+"\n\nDeseja arquivar o PDF sem utilizá-lo nos cálculos?");
+          if(ok){await uploadDocument(file,"PDF",[],"arquivado");el("import-message").textContent="PDF arquivado sem posições importadas."}
+          else el("import-message").textContent="Envio cancelado; nenhum dado foi salvo.";
+          return;
+        }
+        if(result.items.length && confirm("Posição de "+result.reference_date.split("-").reverse().join("/")+
+          ": "+result.items.length+" ativos, valor de mercado "+money(result.market_total)+
+          ".\n\nEsse valor NÃO é o custo das compras nem o lucro. Importar a posição?")){
+          await uploadPortfolioFile(file,"PDF",result);
+          el("import-message").textContent="Posição histórica importada. Veja a aba Valorização.";
+          go("carteira");
+        }else el("import-message").textContent="Importação cancelada.";
+        return;
       }
       let rows;
       if(ext==="csv"){const bytes=await file.arrayBuffer();let s=new TextDecoder("utf-8").decode(bytes);if((s.match(/�/g)||[]).length>2)s=new TextDecoder("windows-1252").decode(bytes);rows=csvRows(s);}
       else{
         if(!window.XLSX)throw new Error("Leitor Excel não carregado. Atualize a página e tente novamente.");
         const wb=window.XLSX.read(await file.arrayBuffer(),{type:"array"});
+        if(window.IRAdapters?.detectMycapital(wb)){
+          const latest=snapshots.slice().sort((a,b)=>b.reference_date.localeCompare(a.reference_date))[0];
+          const fallback=latest?.reference_date||String(currentYear-1)+"-12-31";
+          const date=prompt("Confirme a DATA-BASE do saldo inicial Mycapital (AAAA-MM-DD). É a data da posição, não a data do upload.",fallback);
+          if(date===null){el("import-message").textContent="Importação cancelada.";return;}
+          if(!parseDate(date)||parseDate(date)!==date)throw new Error("Data-base inválida. Use AAAA-MM-DD.");
+          const parsed=window.IRAdapters.parseMycapital(wb,date);
+          if(!confirm("Planilha Mycapital identificada: "+parsed.grouped.length+" ativos, "+parsed.rows.length+
+            " linhas VISTA/ALUGUEL, "+parsed.missing+" ativos ainda sem custo comprovado.\n\nO número 18 e custos zerados serão ignorados. Importar para conferência?")){
+            el("import-message").textContent="Importação cancelada.";return;
+          }
+          await uploadPortfolioFile(file,"EXCEL",parsed);
+          el("import-message").textContent="Planilha inicial importada. Veja a conferência de quantidades em Valorização.";
+          go("carteira");return;
+        }
         rows=window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:"",raw:false,blankrows:false});
       }
       if(rows.length<2)throw new Error("A planilha precisa ter cabeçalhos e operações.");
@@ -414,7 +446,7 @@
     let alerts=calc.critical.map(x=>'<div class="issue">'+html(x)+'</div>').concat(calc.issues.map(x=>'<div class="issue '+(!bad&&!trades.length?'':"")+'">'+html(x)+'</div>'));
     el("issues").innerHTML=alerts.length?alerts.join(""):'<div class="issue ok">Nenhuma inconsistência estrutural identificada nos registros carregados.</div>';
     el("report-warning").textContent=bad?"APURAÇÃO BLOQUEADA: "+calc.critical.join(" • "):"Estimativa não considera IRRF, DARFs já pagos e outros ajustes. Confirme com o contador antes de declarar ou recolher.";
-    renderUploads();renderTrades();renderPositions();renderOpenings();
+    renderUploads();renderTrades();renderPositions();renderOpenings();renderPortfolio();
   }
   function renderUploads(){
     el("uploads-body").innerHTML=uploadRows.slice().reverse().map(u=>
