@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="./style.css">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.10/dist/umd/supabase.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script defer src="./import-adapters.js"></script>
 <script defer src="./app.js"></script>
 </head>
 <body>
@@ -48,6 +50,7 @@
       <button class="navitem" data-section="importacao">⇧ <span>Importar extratos</span></button>
       <button class="navitem" data-section="operacoes">↔ <span>Operações</span></button>
       <button class="navitem" data-section="patrimonio">▤ <span>Posições e custo</span></button>
+      <button class="navitem" data-section="carteira">◈ <span>Valorização</span></button>
       <button class="navitem" data-section="relatorios">▧ <span>Relatórios</span></button>
     </nav>
     <div class="side-bottom"><div class="shield">◎ <span>Banco com RLS<br><strong>Dados restritos ao titular</strong></span></div><a class="back" href="/modulos.html">← Central de projetos</a></div>
@@ -76,10 +79,10 @@
         </div>
       </section>
       <section id="section-importacao" class="app-section" hidden>
-        <div class="section-top"><div><h2>Documentos da corretora</h2><p>Arquivos salvos em armazenamento privado. CSV e Excel podem gerar lançamentos; PDF fica arquivado para conferência.</p></div></div>
+        <div class="section-top"><div><h2>Documentos da corretora</h2><p>Agora aceitamos posição histórica em PDF da Clear e planilha de saldo inicial Mycapital, além de CSV/Excel de negociações. Os arquivos são privados.</p></div></div>
         <div class="uploadbox panel">
           <div class="upload-icon">⇧</div><h3>Enviar extrato ou notas</h3>
-          <p>CSV, XLS, XLSX ou PDF, até 12 MB. Antes do processamento, confira as colunas e o período.</p>
+          <p>PDF de posição consolidada: extrai quantidade, cotação e valor na data-base. Planilha Mycapital: soma À VISTA + ALUGUEL (BTC). CSV/Excel de operações: confira o mapeamento. Até 12 MB por arquivo.</p>
           <label class="btn primary file-btn" for="upload-file">Selecionar arquivo</label>
           <input id="upload-file" type="file" accept=".csv,.xls,.xlsx,.pdf" hidden>
           <div><a class="official" href="./modelo-operacoes.csv" download>↓ Baixar modelo CSV (dados fictícios)</a></div>
@@ -123,6 +126,25 @@
         </div>
         <div class="panel panel-pad"><h3>Posições ao fim do ano</h3><div class="tablewrap"><table><thead><tr><th>Ativo</th><th>Quantidade</th><th>Preço médio</th><th>Custo a declarar</th></tr></thead><tbody id="positions-body"></tbody></table></div></div>
         <div class="panel panel-pad"><h3>Saldos iniciais informados</h3><div class="tablewrap"><table><thead><tr><th>Data-base</th><th>Ativo</th><th>Quantidade</th><th>Custo total</th><th></th></tr></thead><tbody id="openings-body"></tbody></table></div></div>
+      </section>
+      <section id="section-carteira" class="app-section" hidden>
+        <div class="section-top"><div><h2>Valorização da carteira</h2><p>Confronte o valor de mercado do extrato com o custo histórico real. Não misture valorização não realizada com imposto sobre vendas.</p></div><button type="button" class="btn outlined" data-go="importacao">⇧ Importar documentos</button></div>
+        <div id="portfolio-no-data" class="panel panel-pad"><h3>Importe a posição da corretora</h3><p class="subtext">Use o PDF “Posição Consolidada” da Clear e a planilha “saldo inicial” da Mycapital. Quando houver uma posição, os ativos, preços e valores serão exibidos aqui; os custos pendentes poderão ser cadastrados um a um.</p></div>
+        <div id="portfolio-data" hidden>
+          <div class="banner"><strong>Atenção:</strong> cotação do dia indicado no documento, NÃO cotação atual. Sem o custo efetivamente pago na compra, não é possível apurar lucro/prejuízo ou preço médio verdadeiro.</div>
+          <div class="section-top"><div><h3 id="portfolio-reference">Posição histórica</h3><p id="portfolio-source-label">Extrato original salvo em área privada.</p></div></div>
+          <div class="kpis">
+            <article class="metric"><div class="metric-label">Ações e FIIs na data <span>◈</span></div><strong id="portfolio-market">—</strong><small>Valor de mercado na referência</small></article>
+            <article class="metric"><div class="metric-label">Custo comprovado <span>▤</span></div><strong id="portfolio-cost">—</strong><small id="portfolio-cost-count">Custo ainda não informado</small></article>
+            <article class="metric highlight"><div class="metric-label">Valorização / desvalorização <span>↗</span></div><strong id="portfolio-gain">—</strong><small id="portfolio-gain-pct">Exige todos os custos</small></article>
+            <article class="metric"><div class="metric-label">Patrimônio no extrato <span>▥</span></div><strong id="portfolio-total">—</strong><small>Inclui valores adicionais do relatório</small></article>
+          </div>
+          <div class="panel panel-pad">
+            <div class="section-top compact"><div><h3>Conciliação Clear × Mycapital</h3><p id="portfolio-reconciliation" class="subtext">Envie os dois documentos para comparar as quantidades.</p></div></div>
+            <div class="tablewrap"><table><thead><tr><th>Ativo</th><th>Tipo</th><th>Qtd. no PDF</th><th>Qtd. no Excel</th><th>Cotação na data</th><th>Valor de mercado</th><th>Preço médio real</th><th>Resultado</th><th>Custo / ação</th></tr></thead><tbody id="portfolio-body"></tbody></table></div>
+          </div>
+          <div class="panel panel-pad"><h3>Como preencher o custo histórico?</h3><p class="subtext">Clique em <strong>Informar custo</strong> na linha da ação e digite o custo TOTAL de aquisição das ações que possuía naquela data, incluindo despesas válidas. As notas de corretagem e os eventos societários anteriores ajudam a recuperar o preço médio. O campo “18” ou custo zero do modelo Mycapital não será considerado automaticamente.</p><p class="subtext">Se houver posições de aluguel, os ativos emprestados serão somados aos mantidos à vista. O resultado de valorização será exibido somente quando todas as posições tiverem custo histórico conferido.</p></div>
+        </div>
       </section>
       <section id="section-relatorios" class="app-section" hidden>
         <div class="section-top"><div><h2>Relatório para o contador</h2><p>Exporte a memória preliminar de cálculo ou imprima em PDF a visão geral.</p></div></div>
