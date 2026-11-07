@@ -141,7 +141,7 @@
   }
   function isStock(ticker){return /^(?:[A-Z]{4}|[A-Z]\d[A-Z]{2})[345678]$/.test(ticker)}
   function parseTicker(raw){
-    const m=String(raw??"").toUpperCase().match(/\b([A-Z]{4}\d{1,2})\b/);
+    const m=String(raw??"").toUpperCase().match(/\b([A-Z][A-Z0-9]{3,11})\b/);
     return m?m[1]:String(raw??"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
   }
   function parseSide(raw){
@@ -565,7 +565,7 @@
       const label=t?(matches?num(t.qty)+" ✓":num(t.qty)+" ⚠"):"—";
       const pm=realCost!==null&&q>0?money(realCost/q):"—";
       const detail=t&&!matches?"title='Diferença entre a planilha e o extrato' class='portfolio-lost'":"";
-      return "<tr><td><strong>"+html(item.ticker)+"</strong></td><td>"+html(item.asset_class==="FII"?"FII":item.asset_class)+"</td><td>"+(p.snapshot?num(q):"—")+"</td><td "+detail+">"+label+"</td><td>"+(quote!==null?money(quote):"—")+"</td><td>"+marketTxt+"</td><td>"+pm+"</td><td>"+status+"</td><td><button class='table-action' data-ticker='"+html(item.ticker)+"'>"+(realCost===null?"Informar custo":"Editar custo")+"</button></td></tr>";
+      return "<tr><td><strong>"+html(item.ticker)+"</strong></td><td>"+html(item.asset_class==="FII"?"FII":/11$/.test(item.ticker)?"Unit":item.asset_class)+"</td><td>"+(p.snapshot?num(q):"—")+"</td><td "+detail+">"+label+"</td><td>"+(quote!==null?money(quote):"—")+"</td><td>"+marketTxt+"</td><td>"+pm+"</td><td>"+status+"</td><td><button class='table-action' data-ticker='"+html(item.ticker)+"'>"+(realCost===null?"Informar custo":"Editar custo")+"</button></td></tr>";
     });
     el("portfolio-body").innerHTML=rows.join("");
     el("portfolio-cost-count").textContent=ready+" de "+p.all.length+" posições com custo histórico conferido";
