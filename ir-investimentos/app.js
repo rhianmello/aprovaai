@@ -516,6 +516,95 @@
       "<tr><td><strong>"+html(p.ticker)+"</strong></td><td>"+num(p.qty)+"</td><td>"+money(p.cost/p.qty)+"</td><td><strong>"+money(p.cost)+"</strong></td></tr>"
     ).join("")||'<tr><td colspan="4" class="empty-cell">Nenhuma posição apurada.</td></tr>';
   }
+  function activePortfolio(){
+    const snapshot=snapshots.slice().sort((a,b)=>b.reference_date.localeCompare(a.reference_date)||b.created_at.localeCompare(a.created_at))[0]||null;
+    const items=snapshot?snapshotItems.filter(i=>i.snapshot_id===snapshot.id&&Number(i.qty)>0):[];
+    let candidateUploads=[...new Set(initialBalances.map(b=>b.upload_id))]
+      .map(id=>uploadRows.find(u=>u.id===id)).filter(Boolean).sort((a,b)=>b.created_at.localeCompare(a.created_at));
+    const dated=snapshot?candidateUploads.find(u=>initialBalances.some(b=>b.upload_id===u.id&&b.as_of===snapshot.reference_date)):null;
+    const doc=dated||candidateUploads[0]||null;
+    const balances=doc?initialBalances.filter(b=>b.upload_id===doc.id):[];
+    const totals=new Map();
+    for(const b of balances){
+      const p=totals.get(b.ticker)||{ticker:b.ticker,qty:0,cost:0,complete:true,segments:[]};
+      p.qty+=Number(b.qty);
+      if(b.total_cost===null)p.complete=false;else p.cost+=Number(b.total_cost);
+      p.segments.push(b.segment);
+      totals.set(b.ticker,p);
+    }
+    const all=items.length?items:([...totals.values()].map(v=>({
+      ticker:v.ticker,asset_class:/(?:11)$/.test(v.ticker)?"FII":"ACAO",
+      qty:v.qty,last_price:null,market_value:null,source_page:null
+    })));
+    const date=snapshot?.reference_date||balances[0]?.as_of||null;
+    return {snapshot,doc,items,balances,totals,all,date};
+  }
+  function renderPortfolio(){
+    const p=activePortfolio();
+    el("portfolio-no-data").hidden=!!p.all.length;el("portfolio-data").hidden=!p.all.length;
+    if(!p.all.length)return;
+    const dateLabel=p.date?p.date.split("-").reverse().join("/"):"data indefinida";
+    el("portfolio-reference").textContent="Posição de "+dateLabel;
+    el("portfolio-source-label").textContent=p.snapshot
+      ?"Preços históricos do PDF da corretora. "+(p.doc?"Planilha Mycapital vinculada para conciliação.":"Envie a planilha Mycapital para comparar as quantidades.")
+      :"Planilha Mycapital importada. Envie o PDF da corretora para avaliar preço e valor de mercado.";
+    const market=p.items.reduce((n,x)=>n+Number(x.market_value),0);
+    el("portfolio-market").textContent=p.items.length?money(market):"—";
+    el("portfolio-total").textContent=p.snapshot?.reported_total!==null&&p.snapshot?.reported_total!==undefined?money(p.snapshot.reported_total):"—";
+    let ready=0,costSum=0,changeSum=0;
+    const rows=p.all.map(item=>{
+      const q=Number(item.qty),t=p.totals.get(item.ticker),quote=item.last_price==null?null:Number(item.last_price),v=item.market_value==null?null:Number(item.market_value);
+      const matches=!!t&&Math.abs(q-t.qty)<.000001;
+      const saved=openings.filter(o=>o.ticker===item.ticker&&o.as_of===p.date&&Math.abs(Number(o.qty)-q)<.000001).slice(-1)[0];
+      const realCost=saved?Number(saved.total_cost):null;
+      if(realCost!==null&&v!==null){ready++;costSum+=realCost;changeSum+=v-realCost;}
+      let marketTxt=v==null?"—":money(v);
+      let status=realCost!==null&&v!==null
+        ?'<span class="'+(v-realCost>=0?'portfolio-ok':'portfolio-lost')+'">'+money(v-realCost)+'</span><small class="portfolio-pct">'+(realCost>0?((v-realCost)/realCost*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%":"% não calculável")+'</small>'
+        :'<span class="portfolio-pending">Aguardando custo</span>';
+      const label=t?(matches?num(t.qty)+" ✓":num(t.qty)+" ⚠"):"—";
+      const pm=realCost!==null&&q>0?money(realCost/q):"—";
+      const detail=t&&!matches?"title='Diferença entre a planilha e o extrato' class='portfolio-lost'":"";
+      return "<tr><td><strong>"+html(item.ticker)+"</strong></td><td>"+html(item.asset_class==="FII"?"FII":item.asset_class)+"</td><td>"+(p.snapshot?num(q):"—")+"</td><td "+detail+">"+label+"</td><td>"+(quote!==null?money(quote):"—")+"</td><td>"+marketTxt+"</td><td>"+pm+"</td><td>"+status+"</td><td><button class='table-action' data-ticker='"+html(item.ticker)+"'>"+(realCost===null?"Informar custo":"Editar custo")+"</button></td></tr>";
+    });
+    el("portfolio-body").innerHTML=rows.join("");
+    el("portfolio-cost-count").textContent=ready+" de "+p.all.length+" posições com custo histórico conferido";
+    const complete=p.items.length>0&&ready===p.items.length&&p.items.length===p.all.length;
+    el("portfolio-cost").textContent=complete?money(costSum):"—";
+    el("portfolio-gain").textContent=complete?money(changeSum):"—";
+    const pct=complete&&costSum>0?(changeSum/costSum*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%":"Exige todos os custos e o PDF";
+    el("portfolio-gain-pct").textContent=pct;
+    const recon=p.items.length&&p.balances.length?window.IRAdapters.reconcile(p.items,p.balances):null;
+    const reconText=recon
+      ?recon.matched+" de "+recon.total+" ativos com quantidades coincidentes"+(recon.differences.length?". Divergências: "+recon.differences.slice(0,8).map(d=>d.ticker+" ("+num(d.position)+" no PDF × "+num(d.template)+" no Excel)").join("; "):".")
+      :p.items.length?"Aguardando planilha Mycapital para comparar os saldos.":"Aguardando PDF com as cotações e valores históricos.";
+    el("portfolio-reconciliation").textContent=reconText;
+  }
+  async function portfolioAction(e){
+    const b=e.target.closest("button[data-ticker]");if(!b||!user)return;
+    const p=activePortfolio(),item=p.all.find(x=>x.ticker===b.dataset.ticker);
+    if(!item||!p.date)return;
+    const t=p.totals.get(item.ticker);
+    const candidate=t&&t.complete&&Math.abs(t.qty-Number(item.qty))<.000001?t.cost:null;
+    const saved=openings.find(o=>o.ticker===item.ticker&&o.as_of===p.date&&Math.abs(Number(o.qty)-Number(item.qty))<.000001);
+    const start=saved?Number(saved.total_cost):candidate;
+    const input=prompt("Custo TOTAL histórico de "+item.ticker+" ("+num(item.qty)+" unidades) em "+p.date.split("-").reverse().join("/")+
+      "\\n\\nUse notas de corretagem e informe anterior. NÃO digite a cotação nem o valor atual de mercado.\\nDigite o custo total em reais, por exemplo 12500,50:",
+      start===null?"":String(start.toFixed(2)).replace(".",","));
+    if(input===null)return;
+    const total=window.IRAdapters.parseBR(input);
+    if(!(total>0)||!Number.isFinite(total)){toast("Informe um custo total positivo e comprovado. Não use os zeros ou o número '18' da planilha vazia.",true);return}
+    if(!confirm("Confirmar custo de "+money(total)+" para "+num(item.qty)+" unidades de "+item.ticker+" na data "+p.date+"?\\n\\nEste será o custo histórico usado para comparar o valor de mercado e como saldo inicial."))return;
+    b.disabled=true;
+    try{
+      const row={owner_id:user.id,as_of:p.date,ticker:item.ticker,qty:Number(item.qty),total_cost:Math.round(total*100)/100};
+      const {error}=await db.from("ir_opening_positions").upsert(row,{onConflict:"owner_id,ticker,as_of"});
+      if(error)throw error;
+      toast("Custo histórico de "+item.ticker+" salvo. Valor médio e variação atualizados.");
+      await refreshData();
+    }catch(err){toast(errorMessage(err),true);b.disabled=false}
+  }
+
   function renderOpenings(){
     el("openings-body").innerHTML=openings.map(o=>
       "<tr><td>"+html(o.as_of.split("-").reverse().join("/"))+"</td><td>"+html(o.ticker)+"</td><td>"+num(o.qty)+"</td><td>"+money(o.total_cost)+"</td><td><button class='table-action danger' data-id='"+html(o.id)+"'>Excluir</button></td></tr>"
