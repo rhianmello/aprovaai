@@ -15,10 +15,12 @@ Módulo isolado em `/ir-investimentos/` do repositório `rhianmello/aprovaai`, c
 - Compartimentação por usuário (RLS e Storage); os arquivos **não ficam no repositório público**.
 
 ## Limitações fundamentais
-- **PDF fica guardado para auditoria e não é convertido automaticamente em operações.** Isso exige desenvolvimento guiado por um modelo real de extrato de corretora; não invente linhas.
-- A apuração inicial suporta somente operações comuns à vista com ações brasileiras de código típico final 3/4/5/6/7/8; ETFs, FIIs, FIAGRO, BDRs, units, opções, derivativos, exterior, day trade e proventos exigem tratamento adicional.
+- **PDF da posição histórica Clear**: extração local de tabela de posições (quantidade, última cotação, posição financeira e data-base). Isso NÃO converte o PDF em notas de corretagem, operações, custo histórico ou lucro realizado. Outros modelos de PDF ficam arquivados sem análise.
+- A apuração inicial suporta somente operações comuns à vista com ações brasileiras reconhecidas, inclusive código B3SA3. ETFs, FIIs, FIAGRO, BDRs, units, opções, derivativos, exterior, day trade e proventos exigem tratamento adicional. **Unidades como KLBN11 aparecem na posição histórica, mas não são incluídas na simulação simplificada de IR.**
+- **Template Mycapital**: detecta as abas VISTA, ALUGUEL (BTC) e IRRF-PREJUIZO ACUMULADO. Importa quantidades por mercado, permite reconciliação com o PDF e nunca presume que '18' ou custos zerados sejam preços históricos. Ainda não reconstrói o custo por notas; a entrada manual do custo total validado é feita em Valorização.
 - Não importamos dados das notas de corretagem, informes de rendimentos, DARFs, IRRF ou declaração transmitida; também não validamos eventos societários.
 - Não considera imposto já retido, DARF recolhido, juros, multas, dados anteriores à data inicial informada ou compensações fiscais não documentadas.
+- **Valorização não realizada** = mercado (na data do PDF) menos custo histórico informado, com percentual. Não é cotação ao vivo, não é ganho efetivamente realizado, não inclui dividendos/JCP e não corresponde diretamente ao imposto devido.
 - Os valores são auxiliares, não definitivos. O contador deve validar o histórico completo e as regras do ano-base.
 - Use preferencialmente um CSV com os campos do arquivo `modelo-operacoes.csv` (apenas **dados fictícios**). O sistema permite mapear nomes de colunas diferentes.
 
@@ -29,9 +31,20 @@ Módulo isolado em `/ir-investimentos/` do repositório `rhianmello/aprovaai`, c
 - Bucket privado `storage.ir-extratos` com arquivos sob `<auth.uid()>/...`, RLS por dono.
 - Migração `ir_investimentos_v1_private`.
 
+## Como usar esta versão
+1. Entrar / criar conta.
+2. Ir a **Importar extratos** e selecionar o PDF de **Posição Consolidada** da Clear. Confirmar os ativos reconhecidos; em seguida abrir **Valorização**.
+3. Enviar o modelo Excel **saldo_inicial** da Mycapital. Informar a mesma data de referência do PDF. Conferir os totais VISTA + ALUGUEL (BTC), sem duplicar as ações emprestadas.
+4. Os campos zerados e o marcador 18 não são evidências de preço médio. Obter notas de corretagem, extrato histórico completo ou informe anterior com preço/custo de aquisição; em **Valorização**, clicar **Informar custo** e cadastrar o custo total comprovado de cada ativo.
+5. O sistema calcula o preço médio e a valorização/desvalorização histórica apenas quando o custo completo existe; sem custo, mostra pendência. Para apuração fiscal completa, trazer notas de operações, proventos, IRRF, DARFs e eventos societários.
+
+Os documentos enviados pelo usuário ao chat **não são** automaticamente enviados ao site nem ao banco de dados. Faça upload diretamente na conta que deve ter acesso.
+
 ## Próxima etapa recomendada
-Solicitar um extrato anonimizado real da corretora e implementar uma rotina de parser específica para ele; acrescentar conciliação de notas, IRRF e DARFs, histórico societário e comparação com a DIRPF antes de chamar o cálculo de imposto devido definitivo.
+Adicionar suporte à leitura automática de histórico de compras/vendas em notas de corretagem e extrato B3, custos e eventos societários, IRRF e DARFs, e conferência efetiva com a declaração transmitida antes de emitir cálculo definitivo.
 
 Referências oficiais:
 - https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/isencoes
 - https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/renda-variavel/bolsa-de-valores-1/demonstrativo-de-apuracao-de-ganhos
+
+Ajuda oficial Mycapital: https://mycapital.movidesk.com/kb/pt-br/article/600429/como-preencher-os-custos-de-aquisicao-por-meio-da-planilha
