@@ -310,6 +310,56 @@
     toast(rows.length?rows.length+" operações importadas.":"Documento arquivado em área privada.");
     await refreshData();go(rows.length?"operacoes":"importacao");
   }
+  async function uploadPortfolioFile(file,kind,parsed){
+    if(!user)throw new Error("Faça login para importar.");
+    const sha256=await hashFile(file);
+    if(uploadRows.some(u=>u.sha256===sha256))throw new Error("Este documento já está armazenado na sua conta.");
+    const shortName=file.name.replace(/[^a-zA-Z0-9_.-]/g,"_").slice(-90);
+    const file_path=user.id+"/"+crypto.randomUUID()+"-"+shortName;
+    const contentType=kind==="PDF"?"application/pdf":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    const rows=kind==="PDF"?parsed.items:parsed.rows;
+    const put=await db.storage.from(BUCKET).upload(file_path,file,{upsert:false,contentType});
+    if(put.error)throw put.error;
+    let uploadId=null;
+    try{
+      const {data:upload,error:errUpload}=await db.from("ir_uploads").insert({
+        owner_id:user.id,filename:file.name.slice(0,240),file_path,sha256,file_kind:kind,state:"importado",row_count:rows.length
+      }).select("id").single();
+      if(errUpload)throw errUpload;
+      uploadId=upload.id;
+      if(kind==="PDF"){
+        const {data:snapshot,error:snapErr}=await db.from("ir_snapshots").insert({
+          owner_id:user.id,upload_id:uploadId,reference_date:parsed.reference_date,source:"CLEAR_POSICAO",
+          reported_total:parsed.reported_total,reported_cash:parsed.reported_cash,
+          reported_proventos:parsed.reported_proventos
+        }).select("id").single();
+        if(snapErr)throw snapErr;
+        for(let i=0;i<rows.length;i+=250){
+          const chunk=rows.slice(i,i+250).map(r=>({
+            owner_id:user.id,snapshot_id:snapshot.id,ticker:r.ticker,
+            asset_class:r.asset_class,qty:r.qty,last_price:r.last_price,
+            market_value:Math.round(r.market_value*100)/100,source_page:r.source_page
+          }));
+          const {error}=await db.from("ir_snapshot_items").insert(chunk);if(error)throw error;
+        }
+      }else{
+        for(let i=0;i<rows.length;i+=250){
+          const chunk=rows.slice(i,i+250).map(r=>({
+            owner_id:user.id,upload_id:uploadId,as_of:r.as_of,ticker:r.ticker,
+            segment:r.segment,qty:r.qty,total_cost:r.total_cost,avg_cost:r.avg_cost
+          }));
+          const {error}=await db.from("ir_initial_balances").insert(chunk);if(error)throw error;
+        }
+      }
+    }catch(err){
+      if(uploadId)await db.from("ir_uploads").delete().eq("id",uploadId);
+      await db.storage.from(BUCKET).remove([file_path]);
+      throw err;
+    }
+    toast(kind==="PDF"?"Posição histórica importada com "+rows.length+" ativos.":"Saldo inicial Mycapital importado para conciliação ("+rows.length+" linhas).");
+    await refreshData();
+  }
+
   async function saveTrade(e){
     e.preventDefault();const form=e.currentTarget;const d=Object.fromEntries(new FormData(form));
     const row={owner_id:user.id,trade_date:d.trade_date,ticker:parseTicker(d.ticker),side:d.side,qty:Number(d.qty),price:Number(d.price),fees:round2(Number(d.fees)),trade_mode:d.trade_mode};
